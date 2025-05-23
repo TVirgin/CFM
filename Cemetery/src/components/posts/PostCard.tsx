@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Post, User } from '@/types'; // Adjust path
+import { Post, User } from '@/pages/home/post.types'; // Adjust path
 import { Pencil } from 'lucide-react';
 
 interface PostCardProps {

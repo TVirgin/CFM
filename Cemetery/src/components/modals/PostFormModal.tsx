@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { PostFormData } from '@/types'; // Adjust path
+import { PostFormData } from '@/pages/home/post.types'; // Adjust path
 import { XCircle, Save } from 'lucide-react';
 
 interface PostFormModalProps {
