@@ -51,13 +51,7 @@ export const PostFormModal: React.FC<PostFormModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-60">
       <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg relative transform transition-all" onClick={e => e.stopPropagation()}>
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
-          aria-label="Close modal"
-        >
-          <XCircle size={24} />
-        </button>
+        
         <h2 className="text-xl font-semibold mb-6 text-gray-800">
           {initialData ? 'Edit Post' : 'Create New Post'}
         </h2>
@@ -76,7 +70,7 @@ export const PostFormModal: React.FC<PostFormModalProps> = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
               disabled={isSaving}
             />
           </div>
@@ -87,7 +81,7 @@ export const PostFormModal: React.FC<PostFormModalProps> = ({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 bg-white border border-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
               disabled={isSaving}
             />
           </div>
@@ -98,7 +92,7 @@ export const PostFormModal: React.FC<PostFormModalProps> = ({
               type="url"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="https://example.com/image.jpg"
               disabled={isSaving}
             />
@@ -108,7 +102,7 @@ export const PostFormModal: React.FC<PostFormModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isSaving}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+              className="px-4 py-2 bg-white text-sm font-medium text-gray-700 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
             >
               Cancel
             </button>

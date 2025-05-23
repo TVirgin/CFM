@@ -12,7 +12,7 @@ import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 const generateMockPosts = (count: number, currentUser: User | null): Post[] => {
   const posts: Post[] = [];
   for (let i = 1; i <= count; i++) {
-    const author = i % 2 === 0 && currentUser ? currentUser : { uid: `user${100 + i}`, email: `author${i}@example.com`, displayName: `Author ${i}`, role: 'user' as 'user' | 'admin' };
+    const author = i % 2 === 0 && currentUser ? currentUser : { uid: `user${100 + i}`, email: `author${i}@example.com`, displayName: `Author ${i}`, role: 'admin' };
     posts.push({
       id: `post${i}`,
       title: `Sample Post Title ${i}`,

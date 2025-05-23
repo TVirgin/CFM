@@ -53,6 +53,7 @@ export const UserAuethProvider: React.FunctionComponent<IUserAuthProviderProps> 
             return () => {unsubscribe();};
         })
     })
+    
     const value: AuthContextData = {
         user,
         logIn,

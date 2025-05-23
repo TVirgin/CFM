@@ -71,7 +71,7 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
       // 1. User has an 'admin' role (assuming 'role' exists on your user object,
       //    you might need to cast `user` or fetch custom claims)
       // const isAdmin = (user as any).customClaims?.role === 'admin';
-      const isAdmin = (user as any).role === 'admin'; // Simpler example, adjust as per your user object
+      const isAdmin = user; // Simpler example, adjust as per your user object
 
       // 2. Or, user is the owner of the record (assuming 'ownerId' exists on Person type)
       // const isOwner = selectedRecordForInfo.ownerId && user.uid === selectedRecordForInfo.ownerId;
