@@ -4,8 +4,8 @@ export type Person = {
     firstName: string;
     middleName: string;
     lastName: string;
-    birth: number;
-    death: number;
+    birth: Date | null;
+    death: Date | null;
     block: string;
     row: number;
     pos: number;

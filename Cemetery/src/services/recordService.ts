@@ -11,7 +11,8 @@ import {
   serverTimestamp, // For server-side timestamps
   query, // For querying
   where, // For where clauses
-  orderBy // For ordering
+  orderBy, // For ordering
+  Timestamp 
 } from 'firebase/firestore';
 import { Person } from '../pages/records/records.types.ts'; // Adjust path as needed
 
@@ -31,16 +32,34 @@ export const addRecord = async (recordData: Omit<Person, 'id' | 'createdAt'>): P
   }
 };
 
-// READ: Get all person records (consider pagination for large datasets)
 export const getRecords = async (): Promise<Person[]> => {
   try {
     const personCollectionRef = collection(db, PERSON_COLLECTION);
-    // Example: Order by creation time, descending
-    const q = query(personCollectionRef, orderBy("createdAt", "desc"));
+    // Example: Assuming you might want to order by a field, e.g., lastName
+    // If you had a 'createdAt' field on Person and an index for it:
+    // const q = query(personCollectionRef, orderBy("createdAt", "desc"));
+    const q = query(personCollectionRef, orderBy("lastName", "asc")); // Example ordering
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Person));
+
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        firstName: data.firstName,
+        middleName: data.middleName,
+        lastName: data.lastName,
+        // --- Convert Timestamp to Date ---
+        birth: data.birth instanceof Timestamp ? data.birth.toDate() : null,
+        death: data.death instanceof Timestamp ? data.death.toDate() : null,
+        // --- End Conversion ---
+        block: data.block,
+        row: data.row,
+        pos: data.pos,
+        userId: data.userId, // If you added userId to your Person type
+      } as Person; // Cast to Person, ensure all fields align with your Person type
+    });
   } catch (error) {
-    console.error("Error getting documents: ", error);
+    console.error("Error getting all documents: ", error);
     throw error;
   }
 };

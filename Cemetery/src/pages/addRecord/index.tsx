@@ -91,8 +91,8 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
         firstName: formData.firstName.trim(),
         middleName: formData.middleName.trim(),
         lastName: formData.lastName.trim(),
-        birth: Number(formData.birth) || 0, // Convert to number, default to 0 if invalid/empty
-        death: Number(formData.death) || 0, // Convert to number, default to 0 if invalid/empty
+        birth: formData.birth ? new Date(formData.birth + 'T00:00:00') : null, // Convert "YYYY-MM-DD" string to Date or null
+        death: formData.death ? new Date(formData.death + 'T00:00:00') : null, // Add T00:00:00 to help with timezone interpretation
         block: formData.block.trim(),
         row: Number(formData.row) || 0,     // Convert to number
         pos: Number(formData.pos) || 0,     // Convert to number
@@ -102,11 +102,11 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
       };
 
       const newRecordId = await addRecord(recordDataForService);
-      setSuccessMessage(`Record added successfully! ID: ${newRecordId}`);
+      setSuccessMessage(`Record added successfully!`);
       setFormData(initialFormState); // Reset form
 
       setTimeout(() => {
-        navigate('/admin/recordsList'); // Navigate to records list or a relevant page
+        // navigate('/recordsList'); // Navigate to records list or a relevant page
       }, 1500);
 
     } catch (err: any) {
@@ -118,7 +118,7 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
   };
 
   const handleCancel = () => {
-    navigate(-1); // Go back to the previous page
+    // clear all fields
   };
 
   return (
@@ -152,12 +152,12 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
                 {/* Row 2: Birth & Death (Assuming years or timestamps handled as numbers) */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="birth">Birth Info (e.g., Year or Timestamp)</Label>
-                    <Input id="birth" type="number" placeholder="e.g., 1950" value={formData.birth} onChange={handleChange} disabled={isSubmitting} />
+                    <Label htmlFor="birth">Birth Date</Label>
+                    <Input id="birth" type="date" value={formData.birth} onChange={handleChange} disabled={isSubmitting} />
                   </div>
                   <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="death">Death Info (e.g., Year or Timestamp)</Label>
-                    <Input id="death" type="number" placeholder="e.g., 2020" value={formData.death} onChange={handleChange} disabled={isSubmitting} />
+                    <Label htmlFor="death">Death Date</Label>
+                    <Input id="death" type="date" value={formData.death} onChange={handleChange} disabled={isSubmitting} />
                   </div>
                 </div>
 

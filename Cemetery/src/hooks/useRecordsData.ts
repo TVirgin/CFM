@@ -1,7 +1,7 @@
 // src/hooks/useRecordsData.ts
 import * as React from 'react';
 import { Person } from '@/pages/records/records.types'; // Adjust path as needed
-import { getRecord as getRecordsByUserId } from '@/services/recordService'; // Adjust path
+import { getRecords } from '@/services/recordService'; // Adjust path
 import { User } from 'firebase/auth'; // Assuming User type from firebase/auth
 
 interface UseRecordsDataReturn {
@@ -27,7 +27,7 @@ export function useRecordsData(user: User | null, loadingAuth: boolean): UseReco
     setIsLoadingRecords(true);
     setFetchError(null);
     try {
-      const userRecords = await getRecordsByUserId(user.uid);
+      const userRecords = await getRecords();
       setData(userRecords);
     } catch (error: any) {
       console.error("Error fetching records in hook:", error);
