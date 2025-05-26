@@ -123,7 +123,7 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
 
   return (
     <Layout>
-      <div className="flex justify-center items-center min-h-screen p-4">
+      <div className="fflex flex-col items-center justify-start w-full py-8 md:py-12">
         <Card className="w-full max-w-lg">
           <CardHeader>
             <CardTitle>Add New Cemetery Record</CardTitle>

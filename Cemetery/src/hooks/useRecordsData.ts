@@ -17,12 +17,12 @@ export function useRecordsData(user: User | null, loadingAuth: boolean): UseReco
   const [fetchError, setFetchError] = React.useState<string | null>(null);
 
   const loadUserRecords = React.useCallback(async () => {
-    if (!user) {
-      setData([]);
-      setIsLoadingRecords(false);
-      setFetchError(null);
-      return;
-    }
+    // if (!user) {
+    //   setData([]);
+    //   setIsLoadingRecords(false);
+    //   setFetchError(null);
+    //   return;
+    // }
 
     setIsLoadingRecords(true);
     setFetchError(null);
