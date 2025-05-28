@@ -23,8 +23,7 @@ const Layout: React.FunctionComponent<ILayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100"> {/* Base page background */}
-      {/* Sidebar Container (aside) */}
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex-shrink-0 bg-slate-800", // Common styles for the sidebar container
