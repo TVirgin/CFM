@@ -12,9 +12,10 @@ import {
   query, // For querying
   where, // For where clauses
   orderBy, // For ordering
-  Timestamp 
+  Timestamp,
+  QueryConstraint  
 } from 'firebase/firestore';
-import { Person } from '../pages/records/records.types.ts'; // Adjust path as needed
+import { Person, RecordSearchFilters } from '../pages/records/records.types.ts'; // Adjust path as needed
 
 const PERSON_COLLECTION = 'personRecords'; // Define your collection name
 
@@ -113,6 +114,131 @@ export const deleteRecord = async (recordId: string): Promise<void> => {
     await deleteDoc(recordDocRef);
   } catch (error) {
     console.error("Error deleting document: ", error);
+    throw error;
+  }
+};
+
+// Helper to convert YYYY-MM-DD string to start-of-day Date object (UTC based for Firestore)
+// Or handle this conversion before passing to service if preferred
+const convertFilterDate = (dateString?: string): Date | null => {
+    if (!dateString) return null;
+    // This creates a date at UTC midnight. If you need local midnight, use T00:00:00
+    // But for querying a Firestore Timestamp (which is UTC), aiming for UTC boundaries is often simpler.
+    const date = new Date(dateString + 'T00:00:00Z');
+    if (isNaN(date.getTime())) return null; // Invalid date string
+    return date;
+}
+
+// Modified to accept filters
+export const getAllRecords = async (filters?: RecordSearchFilters): Promise<Person[]> => {
+  try {
+    const personCollectionRef = collection(db, PERSON_COLLECTION);
+    const queryConstraints: QueryConstraint[] = [];
+
+    // Apply filters - IMPORTANT: Firestore requires composite indexes for many compound queries
+    if (filters?.firstName) {
+      // For "starts with" type queries (more complex):
+      // queryConstraints.push(where("firstName", ">=", filters.firstName));
+      // queryConstraints.push(where("firstName", "<=", filters.firstName + '\uf8ff'));
+      // For exact match (case-sensitive):
+      queryConstraints.push(where("firstName", "==", filters.firstName.trim()));
+    }
+    if (filters?.lastName) {
+      queryConstraints.push(where("lastName", "==", filters.lastName.trim()));
+    }
+    if (filters?.birthDate) {
+      const birth = convertFilterDate(filters.birthDate);
+      if (birth) {
+        // To query for a specific day, you need a range (start of day to end of day)
+        const birthStart = birth;
+        const birthEnd = new Date(birth);
+        birthEnd.setUTCDate(birth.getUTCDate() + 1); // Start of next day (exclusive)
+        queryConstraints.push(where("birth", ">=", Timestamp.fromDate(birthStart)));
+        queryConstraints.push(where("birth", "<", Timestamp.fromDate(birthEnd)));
+      }
+    }
+    if (filters?.deathDate) {
+      const death = convertFilterDate(filters.deathDate);
+      if (death) {
+        const deathStart = death;
+        const deathEnd = new Date(death);
+        deathEnd.setUTCDate(death.getUTCDate() + 1);
+        queryConstraints.push(where("death", ">=", Timestamp.fromDate(deathStart)));
+        queryConstraints.push(where("death", "<", Timestamp.fromDate(deathEnd)));
+      }
+    }
+
+    // Always add an orderBy, even if it's just the document ID or a primary field
+    // If you have multiple inequality filters, orderBy must start with those fields.
+    // Default order or order by a primary field if no other order is specified
+    queryConstraints.push(orderBy("lastName", "asc")); // Example default order
+
+    const q = query(personCollectionRef, ...queryConstraints);
+    const querySnapshot = await getDocs(q);
+
+    return querySnapshot.docs.map(docSnap => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        ...data,
+        birth: data.birth instanceof Timestamp ? data.birth.toDate() : null,
+        death: data.death instanceof Timestamp ? data.death.toDate() : null,
+      } as Person;
+    });
+  } catch (error) {
+    console.error("Error getting all records with filters: ", error);
+    throw error;
+  }
+};
+
+// Modified to accept filters (similar logic to getAllRecords)
+export const getRecordsByUserId = async (userId: string, filters?: RecordSearchFilters): Promise<Person[]> => {
+  try {
+    const personCollectionRef = collection(db, PERSON_COLLECTION);
+    const queryConstraints: QueryConstraint[] = [where("userId", "==", userId)]; // Base filter
+
+    // Apply additional filters
+    if (filters?.firstName) {
+      queryConstraints.push(where("firstName", "==", filters.firstName.trim()));
+    }
+    if (filters?.lastName) {
+      queryConstraints.push(where("lastName", "==", filters.lastName.trim()));
+    }
+     if (filters?.birthDate) {
+      const birth = convertFilterDate(filters.birthDate);
+      if (birth) {
+        const birthStart = birth;
+        const birthEnd = new Date(birth);
+        birthEnd.setUTCDate(birth.getUTCDate() + 1);
+        queryConstraints.push(where("birth", ">=", Timestamp.fromDate(birthStart)));
+        queryConstraints.push(where("birth", "<", Timestamp.fromDate(birthEnd)));
+      }
+    }
+    if (filters?.deathDate) {
+      const death = convertFilterDate(filters.deathDate);
+      if (death) {
+        const deathStart = death;
+        const deathEnd = new Date(death);
+        deathEnd.setUTCDate(death.getUTCDate() + 1);
+        queryConstraints.push(where("death", ">=", Timestamp.fromDate(deathStart)));
+        queryConstraints.push(where("death", "<", Timestamp.fromDate(deathEnd)));
+      }
+    }
+    queryConstraints.push(orderBy("lastName", "asc")); // Ensure consistent ordering
+
+    const q = query(personCollectionRef, ...queryConstraints);
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docSnap => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        ...data,
+        birth: data.birth instanceof Timestamp ? data.birth.toDate() : null,
+        death: data.death instanceof Timestamp ? data.death.toDate() : null,
+      } as Person;
+    });
+  } catch (error) {
+    console.error("Error getting user records with filters: ", error);
     throw error;
   }
 };

@@ -10,3 +10,11 @@ export type Person = {
     row: number;
     pos: number;
   };
+
+
+export interface RecordSearchFilters {
+  firstName?: string;
+  lastName?: string;
+  birthDate?: string; // Stored as "YYYY-MM-DD" string from input
+  deathDate?: string; // Stored as "YYYY-MM-DD" string from input
+}

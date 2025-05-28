@@ -1,47 +1,56 @@
 // src/hooks/useRecordsData.ts
 import * as React from 'react';
-import { Person } from '@/pages/records/records.types'; // Adjust path as needed
-import { getRecords } from '@/services/recordService'; // Adjust path
-import { User } from 'firebase/auth'; // Assuming User type from firebase/auth
+import { Person, RecordSearchFilters } from '@/pages/records/records.types'; // Adjust path
+import {
+    getRecordsByUserId,
+    getAllRecords,     
+} from '@/services/recordService'; // Adjust path
+import { User } from 'firebase/auth';
 
 interface UseRecordsDataReturn {
   data: Person[];
   isLoadingRecords: boolean;
   fetchError: string | null;
-  refetchRecords: () => void; // Function to manually refetch data
+  refetchRecords: () => void; // This will now refetch with current active filters
 }
 
-export function useRecordsData(user: User | null, loadingAuth: boolean): UseRecordsDataReturn {
+// The hook now accepts activeSearchFilters
+export function useRecordsData(
+    user: User | null,
+    loadingAuth: boolean,
+    // filters: RecordSearchFilters // Active search filters
+): UseRecordsDataReturn {
   const [data, setData] = React.useState<Person[]>([]);
   const [isLoadingRecords, setIsLoadingRecords] = React.useState(true);
   const [fetchError, setFetchError] = React.useState<string | null>(null);
 
-  const loadUserRecords = React.useCallback(async () => {
-    // if (!user) {
-    //   setData([]);
-    //   setIsLoadingRecords(false);
-    //   setFetchError(null);
-    //   return;
-    // }
-
+  const loadData = React.useCallback(async () => {
     setIsLoadingRecords(true);
     setFetchError(null);
     try {
-      const userRecords = await getRecords();
-      setData(userRecords);
+      let fetchedRecords: Person[];
+      console.log("Fetching data:");
+      
+      fetchedRecords = await getAllRecords();
+      
+      setData(fetchedRecords);
     } catch (error: any) {
       console.error("Error fetching records in hook:", error);
       setFetchError(error.message || "Failed to fetch records.");
     } finally {
       setIsLoadingRecords(false);
     }
-  }, [user]); // Dependency: user
+  }, [user]);
 
   React.useEffect(() => {
-    if (!loadingAuth) { // Only fetch when auth state is resolved
-      loadUserRecords();
+    if (!loadingAuth) {
+      loadData();
+    } else {
+      setData([]);
+      setIsLoadingRecords(true);
+      setFetchError(null);
     }
-  }, [loadingAuth, loadUserRecords]); // Dependencies: loadingAuth and the memoized loadUserRecords
+  }, [loadingAuth, loadData]);
 
-  return { data, isLoadingRecords, fetchError, refetchRecords: loadUserRecords };
+  return { data, isLoadingRecords, fetchError, refetchRecords: loadData };
 }

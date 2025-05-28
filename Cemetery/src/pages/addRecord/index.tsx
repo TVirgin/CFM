@@ -143,7 +143,7 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
                     <Input id="middleName" placeholder="Enter middle name (optional)" value={formData.middleName} onChange={handleChange} disabled={isSubmitting} />
                   </div>
                 </div>
-                <div className="flex flex-col space-y-1.5"> {/* Last Name on its own row or adjust grid */}
+                <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="lastName">Last Name</Label>
                     <Input id="lastName" placeholder="Enter last name" value={formData.lastName} onChange={handleChange} disabled={isSubmitting} required />
                 </div>

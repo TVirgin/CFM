@@ -2,12 +2,14 @@
 import * as React from 'react';
 import { Table, flexRender } from '@tanstack/react-table';
 import { Person } from '@/pages/records/records.types'; // Adjust path
+import { ChevronsUpDown, ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react'; // Icons for sorting
+import { cn } from '@/lib/utils'; // If you use cn for class names
 
 interface RecordsTableDisplayProps {
   table: Table<Person>;
   onRowClick: (person: Person) => void;
-  isLoading: boolean; // To potentially show a loading state within the table body
-  hasError: boolean;  // To potentially show an error state within the table body
+  isLoading: boolean;
+  hasError: boolean;
 }
 
 export const RecordsTableDisplay: React.FC<RecordsTableDisplayProps> = ({ table, onRowClick, isLoading, hasError }) => {
@@ -23,14 +25,31 @@ export const RecordsTableDisplay: React.FC<RecordsTableDisplayProps> = ({ table,
                   colSpan={header.colSpan}
                   scope="col"
                   style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider whitespace-nowrap border-b-2 border-gray-200"
+                  className={cn(
+                    "px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider whitespace-nowrap border-b-2 border-gray-200",
+                    header.column.getCanSort() ? "cursor-pointer select-none hover:bg-gray-200" : ""
+                  )}
+                  onClick={header.column.getToggleSortingHandler()} // Make header clickable for sorting
                 >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                  <div className="flex items-center space-x-1"> {/* Flex container for header text and sort icon */}
+                    <span> {/* Wrap header text in span if it's simple text */}
+                        {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                            )}
+                    </span>
+                    {/* Display Sorting Icon */}
+                    {header.column.getCanSort() && (
+                        <span>
+                        {{
+                            asc: <ArrowUpNarrowWide size={14} className="text-gray-700" />,
+                            desc: <ArrowDownWideNarrow size={14} className="text-gray-700" />,
+                        }[header.column.getIsSorted() as string] ?? <ChevronsUpDown size={14} className="text-gray-400" />}
+                        </span>
+                    )}
+                  </div>
                 </th>
               ))}
             </tr>
@@ -39,13 +58,13 @@ export const RecordsTableDisplay: React.FC<RecordsTableDisplayProps> = ({ table,
         <tbody>
           {isLoading ? (
             <tr>
-              <td colSpan={table.getAllColumns().length} className="px-6 py-10 text-center text-sm text-gray-500">
+              <td colSpan={table.getHeaderGroups()[0]?.headers.length || table.getAllColumns().length} className="px-6 py-10 text-center text-sm text-gray-500">
                 Loading records...
               </td>
             </tr>
           ) : hasError ? (
              <tr>
-              <td colSpan={table.getAllColumns().length} className="px-6 py-10 text-center text-sm text-red-500">
+              <td colSpan={table.getHeaderGroups()[0]?.headers.length || table.getAllColumns().length} className="px-6 py-10 text-center text-sm text-red-500">
                 Error loading records.
               </td>
             </tr>
@@ -70,7 +89,7 @@ export const RecordsTableDisplay: React.FC<RecordsTableDisplayProps> = ({ table,
           ) : (
             <tr>
               <td
-                colSpan={table.getAllColumns().length} // Use Tanstack Table utility for colspan
+                colSpan={table.getHeaderGroups()[0]?.headers.length || table.getAllColumns().length}
                 className="px-6 py-10 text-center text-sm text-gray-500"
               >
                 No records found.

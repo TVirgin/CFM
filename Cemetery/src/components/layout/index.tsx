@@ -9,7 +9,7 @@ interface ILayoutProps {
 }
 
 const DESKTOP_SIDEBAR_WIDTH = "w-64"; // 16rem or 256px (Tailwind class)
-const DESKTOP_SIDEBAR_MARGIN = "lg:ml-64"; // Corresponding margin for main content
+const DESKTOP_SIDEBAR_MARGIN = "lg:ml-30"; // Corresponding margin for main content
 
 const Layout: React.FunctionComponent<ILayoutProps> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);

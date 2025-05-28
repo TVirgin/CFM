@@ -24,10 +24,7 @@ export const RecordInfoModal: React.FC<RecordInfoModalProps> = ({
     return null;
   }
 
-  // Helper to format birth/death numbers.
-  // Assumes if the number is > 100000 (a low timestamp), it's a timestamp. Otherwise, it's a year.
-  // Adjust this logic based on how you store these 'number' values.
-  // UPDATED Helper to format Date objects
+  // CORRECTED Helper to format Date objects
   const formatDateDisplay = (dateValue: Date | null | undefined): string => {
     if (!dateValue) { // Handles null or undefined
       return 'N/A';
@@ -45,27 +42,27 @@ export const RecordInfoModal: React.FC<RecordInfoModalProps> = ({
       });
     } catch (e) {
       console.error("Error formatting date:", e);
-      // Fallback for an unexpected error during formatting
-      return dateValue.toISOString(); // Or some other simple string representation
+      return dateValue.toISOString(); // Fallback
     }
   };
 
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out"
+      className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out"
       aria-labelledby="info-modal-title"
       role="dialog"
       aria-modal="true"
       onClick={onClose} // Click on backdrop closes the modal
     >
       <div
-        className="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg transform transition-all duration-300 ease-in-out scale-100"
+        className="bg-white p-4 sm:p-6 rounded-lg shadow-xl w-full max-w-lg transform transition-all duration-300 ease-in-out scale-100 flex flex-col max-h-[90vh]" // Added flex, flex-col, max-h
         onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking inside modal content
       >
-        <div className="flex items-center justify-between mb-6 pb-3 border-b"> {/* Added padding and border to header */}
-          <div className='flex items-center'>
-            <Info className="h-6 w-6 text-blue-600 mr-3" aria-hidden="true" />
-            <h3 className="text-xl leading-6 font-medium text-gray-900" id="info-modal-title">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between mb-4 pb-3 border-b flex-shrink-0"> {/* Added flex-shrink-0 */}
+          <div className='flex items-center min-w-0'> {/* Added min-w-0 for long titles */}
+            <Info className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3 flex-shrink-0" aria-hidden="true" />
+            <h3 className="text-lg sm:text-xl leading-6 font-medium text-gray-900 truncate" id="info-modal-title">
               Record Details
             </h3>
           </div>
@@ -74,22 +71,26 @@ export const RecordInfoModal: React.FC<RecordInfoModalProps> = ({
             className="p-1 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors"
             aria-label="Close modal"
           >
-            <XCircle size={28}/>
+            <XCircle size={24} className="sm:w-7 sm:h-7"/> {/* Slightly smaller on mobile */}
           </button>
         </div>
-        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm text-gray-700">
-          {/* <div><strong>ID:</strong> <span className="text-gray-900">{record.id || 'N/A'}</span></div> */}
-          <div><strong>First Name:</strong> <span className="text-gray-900">{record.firstName}</span></div>
-          {record.middleName && <div><strong>Middle Name:</strong> <span className="text-gray-900">{record.middleName}</span></div>}
-          <div><strong>Last Name:</strong> <span className="text-gray-900">{record.lastName}</span></div>
-          <div><strong>Birth Info:</strong> <span className="text-gray-900">{formatDateDisplay(record.birth)}</span></div>
-          <div><strong>Death Info:</strong> <span className="text-gray-900">{formatDateDisplay(record.death)}</span></div>
-          <div><strong>Block:</strong> <span className="text-gray-900">{record.block}</span></div>
-          <div><strong>Row:</strong> <span className="text-gray-900">{record.row}</span></div>
-          <div><strong>Position:</strong> <span className="text-gray-900">{record.pos}</span></div>
-          {/* Removed: Age, Visits, Status, Profile Progress */}
+
+        {/* Modal Content - Make this part scrollable */}
+        <div className="overflow-y-auto flex-grow pr-1"> {/* Added flex-grow and overflow-y-auto */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 text-sm text-gray-700">
+            <div><strong>First Name:</strong> <span className="text-gray-900">{record.firstName}</span></div>
+            {record.middleName && <div><strong>Middle Name:</strong> <span className="text-gray-900">{record.middleName}</span></div>}
+            <div><strong>Last Name:</strong> <span className="text-gray-900">{record.lastName}</span></div>
+            <div><strong>Birth Info:</strong> <span className="text-gray-900">{formatDateDisplay(record.birth)}</span></div>
+            <div><strong>Death Info:</strong> <span className="text-gray-900">{formatDateDisplay(record.death)}</span></div>
+            <div><strong>Block:</strong> <span className="text-gray-900">{record.block}</span></div>
+            <div><strong>Row:</strong> <span className="text-gray-900">{record.row}</span></div>
+            <div><strong>Position:</strong> <span className="text-gray-900">{record.pos}</span></div>
+          </div>
         </div>
-        <div className="mt-8 flex flex-col sm:flex-row justify-end items-center border-t pt-6 gap-3"> {/* Increased top padding for footer */}
+
+        {/* Modal Footer */}
+        <div className="mt-6 flex flex-col sm:flex-row justify-end items-center border-t pt-4 sm:pt-6 gap-3 flex-shrink-0"> {/* Added flex-shrink-0 */}
           {canManage && onEdit && (
             <button
               type="button"
