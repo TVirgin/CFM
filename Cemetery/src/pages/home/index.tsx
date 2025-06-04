@@ -1,16 +1,15 @@
 // src/pages/Home/index.tsx
 import Layout from "@/components/layout";
 import * as React from "react";
-import { PlusCircle, Image as ImageIcon } from "lucide-react"; // Added ImageIcon for placeholder
-import { Post, PostFormData, User } from "./post.types"; // Ensure this path is correct
+import { PlusCircle, Image as ImageIcon } from "lucide-react";
+import { Post, PostFormTextData, User, PostFormData } from "./post.types"; // Renamed imported PostFormData
 import { PostCard } from "@/components/posts/PostCard";
 import { PostFormModal } from "@/components/modals/PostFormModal";
 import { ReauthenticationModal } from "@/components/modals/ReauthenticationModal";
 import { useUserAuth } from "@/context/userAuthContext";
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 
-// --- Import your post service functions ---
-import { getAllPosts, createPost, updatePost } from "@/services/postService"; // Adjust path
+import { getAllPosts, createPost, updatePost, uploadPostImage, deletePostImage } from "@/services/postService"; // Import uploadPostImage
 
 interface IHomeProps {}
 
@@ -20,22 +19,21 @@ const Home: React.FunctionComponent<IHomeProps> = (props) => {
   const [isLoadingPosts, setIsLoadingPosts] = React.useState(true);
   const [postsFetchError, setPostsFetchError] = React.useState<string | null>(null);
 
-  // Post Form Modal State
   const [isPostFormModalOpen, setIsPostFormModalOpen] = React.useState(false);
   const [editingPost, setEditingPost] = React.useState<Post | null>(null);
 
-  // Re-authentication Modal State
   const [isReauthModalOpen, setIsReauthModalOpen] = React.useState(false);
   const [reauthError, setReauthError] = React.useState<string | null>(null);
-  const [isReauthProcessing, setIsReauthProcessing] = React.useState(false);
+  const [isActionProcessing, setIsActionProcessing] = React.useState(false); // Renamed from isReauthProcessing
 
   const [pendingAction, setPendingAction] = React.useState<{
     type: 'create' | 'edit';
-    data: PostFormData;
-    originalPostId?: string;
+    textData: PostFormTextData;    // Data from form's text fields (title, content, manualImageUrl)
+    imageFileToUpload?: File | null; // Optional file to upload
+    originalPostId?: string;        // For edits
+    existingImageUrl?: string;      // For edits, to know if an old image needs deletion
   } | null>(null);
 
-  // --- Data Fetching ---
   const fetchPosts = React.useCallback(async () => {
     setIsLoadingPosts(true);
     setPostsFetchError(null);
@@ -52,9 +50,8 @@ const Home: React.FunctionComponent<IHomeProps> = (props) => {
 
   React.useEffect(() => {
     fetchPosts();
-  }, [fetchPosts]); // Fetch posts on component mount
+  }, [fetchPosts]);
 
-  // --- Post Form Modal Handlers ---
   const openCreatePostModal = () => {
     setEditingPost(null);
     setIsPostFormModalOpen(true);
@@ -70,12 +67,16 @@ const Home: React.FunctionComponent<IHomeProps> = (props) => {
     setEditingPost(null);
   };
 
-  // --- Re-authentication and Action Execution ---
-  const handlePostFormSubmit = (formData: PostFormData) => {
+  const handlePostFormSubmit = (
+    textData: PostFormTextData, // { title, content, manualImageUrl }
+    imageFile?: File | null
+  ) => {
     setPendingAction({
       type: editingPost ? 'edit' : 'create',
-      data: formData,
+      textData,
+      imageFileToUpload: imageFile,
       originalPostId: editingPost?.id,
+      existingImageUrl: editingPost?.imageUrl,
     });
     setIsReauthModalOpen(true);
     setReauthError(null);
@@ -84,31 +85,65 @@ const Home: React.FunctionComponent<IHomeProps> = (props) => {
 
   const executePostAction = async () => {
     if (!pendingAction || !user) {
-        // This case should ideally be prevented by UI (e.g. disabling buttons)
-        console.error("Pending action or user is not available.");
-        setPendingAction(null); // Clear pending action
+        setPostsFetchError("Action cannot be completed: missing data or user not authenticated.");
+        setPendingAction(null);
         return;
     }
 
-    const { type, data, originalPostId } = pendingAction;
+    setIsActionProcessing(true); // Start processing the entire action (upload + save)
+    const { type, textData, imageFileToUpload, originalPostId, existingImageUrl } = pendingAction;
     const authorName = user.displayName || user.email || "Anonymous";
+    let finalImageUrl = textData.manualImageUrl || undefined; // Use manually entered URL if provided
+    let oldImageToDelete: string | undefined = undefined;
 
     try {
-        if (type === 'create') {
-            console.log("Attempting to CREATE post (after re-auth):", data);
-            await createPost(data, user.uid, authorName);
-            // TODO: Optionally handle the returned newPostId from createPost if needed
-        } else if (type === 'edit' && originalPostId) {
-            console.log("Attempting to EDIT post (after re-auth):", originalPostId, data);
-            await updatePost(originalPostId, data);
+      if (imageFileToUpload) { // New image uploaded
+        if (type === 'edit' && existingImageUrl) { // If editing and there was an old image
+            oldImageToDelete = existingImageUrl;
         }
-        fetchPosts(); // Re-fetch posts to show the latest data
+        console.log("Uploading image...");
+        finalImageUrl = await uploadPostImage(imageFileToUpload, user.uid);
+        console.log("Image uploaded, URL:", finalImageUrl);
+      } else if (type === 'edit' && textData.manualImageUrl === '' && existingImageUrl) {
+        // User explicitly cleared the manualImageUrl and didn't upload a new file, meaning remove image
+        oldImageToDelete = existingImageUrl;
+        finalImageUrl = undefined; // Or null, depending on how you want to represent no image
+      } else if (type === 'edit' && !textData.manualImageUrl && !imageFileToUpload) {
+        // User didn't change image fields, keep existing one
+        finalImageUrl = existingImageUrl;
+      }
+      // If type is 'create' and no imageFile and no manualImageUrl, finalImageUrl remains undefined
+
+      const firestoreData: PostFormData = { // Type for data sent to Firestore service
+        title: textData.title,
+        content: textData.content,
+        imageUrl: finalImageUrl,
+      };
+
+      if (type === 'create') {
+        await createPost(firestoreData, user.uid, authorName);
+      } else if (type === 'edit' && originalPostId) {
+        await updatePost(originalPostId, firestoreData);
+      }
+
+      // If an old image was replaced or removed, delete it from storage
+      if (oldImageToDelete && oldImageToDelete !== finalImageUrl) {
+          console.log("Deleting old image:", oldImageToDelete);
+          await deletePostImage(oldImageToDelete).catch(err => console.warn("Failed to delete old image, might not exist:", err));
+      }
+
+      fetchPosts(); // Re-fetch posts to show the latest data
     } catch (error: any) {
-        console.error(`Failed to ${type} post:`, error);
-        // Optionally set an error state to display to the user for the specific action
-        setPostsFetchError(`Failed to ${type} post. ${error.message || ''}`);
+      console.error(`Failed to ${type} post or upload image:`, error);
+      setPostsFetchError(`Failed to ${type} post. ${error.message || ''}`);
+        // If image upload succeeded but Firestore failed, consider deleting the uploaded image (rollback)
+        if (imageFileToUpload && finalImageUrl && type === 'create') { // Only for create, edit might have just failed to update text
+            console.warn("Create post failed after image upload. Deleting orphaned image:", finalImageUrl);
+            await deletePostImage(finalImageUrl).catch(err => console.error("Failed to delete orphaned image:", err));
+        }
     } finally {
-        setPendingAction(null);
+      setPendingAction(null);
+      setIsActionProcessing(false);
     }
   };
 
@@ -117,26 +152,28 @@ const Home: React.FunctionComponent<IHomeProps> = (props) => {
       setReauthError("User not available. Please sign in again.");
       return;
     }
-    setIsReauthProcessing(true);
+    setIsActionProcessing(true); // Use isActionProcessing for the whole flow
     setReauthError(null);
     try {
       const credential = EmailAuthProvider.credential(email, password);
       await reauthenticateWithCredential(user, credential);
       console.log("Re-authentication successful for post action.");
       setIsReauthModalOpen(false);
-      await executePostAction();
+      await executePostAction(); // Now this will handle image upload and then Firestore
     } catch (error: any) {
       console.error("Re-authentication failed:", error);
       setReauthError(error.message || "Failed to re-authenticate. Check credentials.");
-    } finally {
-      setIsReauthProcessing(false);
+      setIsActionProcessing(false); // Stop processing if re-auth fails
+      setPendingAction(null); // Clear pending action as re-auth failed
     }
+    // 'finally' for setIsActionProcessing is in executePostAction
   };
 
   return (
     <Layout>
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
+        {/* ... Header and Create Post Button ... */}
+         <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Community Posts</h1>
           {user && (
             <button
@@ -148,16 +185,14 @@ const Home: React.FunctionComponent<IHomeProps> = (props) => {
           )}
         </div>
 
+
+        {/* ... Loading, Error, No Posts, PostCard mapping (same as before) ... */}
         {isLoadingPosts ? (
-          <div className="text-center py-12">
-            <p className="text-xl text-gray-500">Loading posts...</p>
-            {/* You can add a spinner here */}
-          </div>
+          <div className="text-center py-12"> <p className="text-xl text-gray-500">Loading posts...</p> </div>
         ) : postsFetchError ? (
           <div className="text-center py-12 p-4 bg-red-50 text-red-700 rounded-lg">
             <p className="text-xl font-semibold">Could not load posts</p>
             <p className="mt-1">{postsFetchError}</p>
-            {/* <Button onClick={fetchPosts} className="mt-4">Try Again</Button> */}
           </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-12">
@@ -168,12 +203,7 @@ const Home: React.FunctionComponent<IHomeProps> = (props) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
             {posts.map(post => (
-              <PostCard
-                key={post.id}
-                post={post}
-                currentUser={user}
-                onEdit={openEditPostModal}
-              />
+              <PostCard key={post.id} post={post} currentUser={user} onEdit={openEditPostModal} />
             ))}
           </div>
         )}
@@ -183,21 +213,16 @@ const Home: React.FunctionComponent<IHomeProps> = (props) => {
         isOpen={isPostFormModalOpen}
         onClose={closePostFormModal}
         onSubmit={handlePostFormSubmit}
-        initialData={editingPost 
-            ? { title: editingPost.title, content: editingPost.content, imageUrl: editingPost.imageUrl } 
-            : undefined} // Pass undefined for create
-        isSaving={isReauthProcessing || (pendingAction !== null)}
+        initialPostData={editingPost} // Pass the whole Post object or map to {title, content, imageUrl}
+        isSaving={isActionProcessing} // Use the overall action processing state
       />
 
       <ReauthenticationModal
         isOpen={isReauthModalOpen}
-        onClose={() => {
-            setIsReauthModalOpen(false);
-            setPendingAction(null);
-        }}
+        onClose={() => { setIsReauthModalOpen(false); setPendingAction(null); setIsActionProcessing(false); }}
         onConfirm={handleReauthConfirm}
         actionName={pendingAction?.type === 'create' ? 'create this post' : 'save these changes'}
-        isProcessing={isReauthProcessing}
+        isProcessing={isActionProcessing} // Use the overall action processing state
         error={reauthError}
         defaultEmail={user?.email || ''}
       />
