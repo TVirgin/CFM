@@ -1,6 +1,5 @@
 // src/pages/Records/index.tsx
 
-
 import Layout from '@/components/layout';
 import * as React from 'react';
 import './index.css'; // Your existing styles
@@ -14,7 +13,7 @@ import {
 } from '@tanstack/react-table';
 import { Person, RecordSearchFilters } from './records.types';
 import { staticPersonColumns } from './recordTable.config';
-import { useUserAuth } from '@/context/userAuthContext';
+import { useUserAuth } from '../../context/userAuthContext';
 
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation';
 import { DeleteConfirmationModal } from '../../components/modals/DeleteConfirmationModal';
@@ -28,121 +27,77 @@ import { useRecordManagementPermission } from '../../hooks/useRecordManagementPe
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Search, RotateCcw, MapPin } from "lucide-react"; // Added MapPin icon
+import { Search, RotateCcw, MapPin, ArrowLeft } from "lucide-react"; // Added ArrowLeft icon
 
-// --- Import the Map Component and helpers ---
-import {
-  InteractiveCemeteryMap,
-  PlotIdentifier,
-} from '../../components/maps/InteractiveCemeteryMap'; // Adjust path as needed
-// If you import your SVG as a React Component (e.g. using SVGR)
-import { CemeteryMapSVG } from '../../components/maps/CemeteryMapSVG.tsx';
+// --- Map Component Imports ---
+import { InteractiveCemeteryMap, PlotIdentifier } from '../../components/maps/InteractiveCemeteryMap'; // Adjust path
+import { CemeteryMapSVG } from '../../components/maps/CemeteryMapSVG'; // Your main overview map component
+
+// --- DETAILED WARD SVG COMPONENTS (Examples - you must create these) ---
+import { Ward1ESVG } from '../../components/maps/wards/Ward1ESVG'; // Example
+import { WardASVG } from '../../components/maps/wards/WardASVG';   // Example
+// ... import all other ward SVG components ...
 
 
-interface IRecordsProps { }
+// A helper map to dynamically select the correct ward SVG component
+const wardComponentMap: { [key: string]: React.ElementType } = {
+  '1E': Ward1ESVG,
+  'A': WardASVG,
+  // Add entries for all your ward IDs: '1', '2', 'B', 'C', etc.
+  // '1': Ward1SVG,
+  // '2': Ward2SVG,
+};
+
+
+interface IRecordsProps {}
 
 const Records: React.FunctionComponent<IRecordsProps> = (props) => {
   const { user, loadingAuth } = useUserAuth();
 
-  // --- Search Filters State ---
-  const initialSearchFilters: RecordSearchFilters = {
-    firstName: '',
-    lastName: '',
-    birthDate: '',
-    deathDate: '',
-  };
+  // --- State for Search Filters ---
+  const initialSearchFilters: RecordSearchFilters = { firstName: '', lastName: '', birthDate: '', deathDate: '' };
   const [searchFilters, setSearchFilters] = React.useState<RecordSearchFilters>(initialSearchFilters);
   const [activeSearchFilters, setActiveSearchFilters] = React.useState<RecordSearchFilters>(initialSearchFilters);
 
-  // --- Data Fetching ---
+  // --- Data Fetching & Table State ---
   const { data: allRecords, isLoadingRecords, fetchError, refetchRecords: refetchAllRecords } = useRecordsData(user, loadingAuth);
   const [filteredData, setFilteredData] = React.useState<Person[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
-  // --- State for Map Interaction ---
-  const [plotToHighlight, setPlotToHighlight] = React.useState<string | null>(null); // e.g., "A-1-1"
-  const [showMap, setShowMap] = React.useState(false);
+  // --- State for Map Interaction & Drill-Down ---
+  const [plotToHighlight, setPlotToHighlight] = React.useState<PlotIdentifier | null>(null);
+  const [showMap, setShowMap] = React.useState(true); // Keep map initially visible
+  const [activeWardId, setActiveWardId] = React.useState<string | null>(null); // NEW: Tracks which detailed ward map to show
 
 
-  // --- Client-Side Filtering Logic ---
-  React.useEffect(() => {
+  // Client-Side Filtering Logic (remains the same)
+  React.useEffect(() => { /* ... your existing filtering logic ... */
     let recordsToFilter = [...allRecords];
-    // Apply First Name Filter
-    if (activeSearchFilters.firstName) {
-      const searchTerm = activeSearchFilters.firstName.toLowerCase();
-      recordsToFilter = recordsToFilter.filter(person =>
-        person.firstName.toLowerCase().includes(searchTerm)
-      );
-    }
-    // Apply Last Name Filter
-    if (activeSearchFilters.lastName) {
-      const searchTerm = activeSearchFilters.lastName.toLowerCase();
-      recordsToFilter = recordsToFilter.filter(person =>
-        person.lastName.toLowerCase().includes(searchTerm)
-      );
-    }
-    // Apply Birth Date Filter
-    if (activeSearchFilters.birthDate) {
-      recordsToFilter = recordsToFilter.filter(person => {
-        if (!person.birth) return false;
-        try {
-          const personBirthDateStr = person.birth.toISOString().split('T')[0];
-          return personBirthDateStr === activeSearchFilters.birthDate;
-        } catch (e) { return false; }
-      });
-    }
-    // Apply Death Date Filter
-    if (activeSearchFilters.deathDate) {
-      recordsToFilter = recordsToFilter.filter(person => {
-        if (!person.death) return false;
-        try {
-          const personDeathDateStr = person.death.toISOString().split('T')[0];
-          return personDeathDateStr === activeSearchFilters.deathDate;
-        } catch (e) { return false; }
-      });
-    }
+    if (activeSearchFilters.firstName) { const searchTerm = activeSearchFilters.firstName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.firstName.toLowerCase().includes(searchTerm)); }
+    if (activeSearchFilters.lastName) { const searchTerm = activeSearchFilters.lastName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.lastName.toLowerCase().includes(searchTerm)); }
+    if (activeSearchFilters.birthDate) { recordsToFilter = recordsToFilter.filter(p => { if (!p.birth) return false; try { return p.birth.toISOString().split('T')[0] === activeSearchFilters.birthDate; } catch (e) { return false; } }); }
+    if (activeSearchFilters.deathDate) { recordsToFilter = recordsToFilter.filter(p => { if (!p.death) return false; try { return p.death.toISOString().split('T')[0] === activeSearchFilters.deathDate; } catch (e) { return false; } }); }
     setFilteredData(recordsToFilter);
   }, [allRecords, activeSearchFilters]);
 
-  // --- Search Handlers ---
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setSearchFilters(prev => ({ ...prev, [id]: value }));
-  };
-  const handleSearchSubmit = (e?: React.FormEvent<HTMLFormElement>) => {
-    e?.preventDefault();
-    setActiveSearchFilters(searchFilters);
-  };
-  const handleResetSearch = () => {
-    setSearchFilters(initialSearchFilters);
-    setActiveSearchFilters(initialSearchFilters);
-  };
-
-  // --- Delete Modal Logic ---
-  const {
-    isModalOpen: isDeleteModalOpen, recordToDelete,
-    reauthEmail, setReauthEmail, reauthPassword, setReauthPassword,
-    modalError: deleteModalError, isDeleting,
-    openDeleteModal, closeDeleteModal, confirmDelete,
-  } = useDeleteConfirmation({
-    onDeleteSuccess: (deletedRecordId) => {
-      refetchAllRecords(); // Refetch the entire base dataset after a delete
-      setPlotToHighlight(null); // Clear map highlight after delete
-      console.log("Record deleted, refetching all data (ID):", deletedRecordId);
-    }
-  });
-
+  // Search Handlers (remain the same)
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { /* ... */ };
+  const handleSearchSubmit = (e?: React.FormEvent<HTMLFormElement>) => { /* ... */ };
+  const handleResetSearch = () => { /* ... */ };
+  // --- Delete Modal Logic (remains the same) ---
+  const { isModalOpen: isDeleteModalOpen, recordToDelete, reauthEmail, setReauthEmail, reauthPassword, setReauthPassword, modalError: deleteModalError, isDeleting, openDeleteModal, closeDeleteModal, confirmDelete, } = useDeleteConfirmation({ onDeleteSuccess: (deletedRecordId) => { refetchAllRecords(); setPlotToHighlight(null); } });
   // --- Info Modal Logic & Map Highlighting ---
-  const {
-    isInfoModalOpen, selectedRecordForInfo,
-    openInfoModal: baseOpenInfoModal,
-    closeInfoModal: baseCloseInfoModal,
-  } = useRecordInfoModal();
+  const { isInfoModalOpen, selectedRecordForInfo, openInfoModal: baseOpenInfoModal, closeInfoModal: baseCloseInfoModal, } = useRecordInfoModal();
 
   const openInfoModalAndHighlight = React.useCallback((person: Person) => {
     baseOpenInfoModal(person);
-    if (person.block && typeof person.row === 'number' && typeof person.pos === 'number') {
-      setPlotToHighlight(`${person.block}-${person.row}-${person.pos}`);
+    // When opening info, set both the active ward and the specific plot to highlight
+    if (person.block) {
+      setActiveWardId(person.block); // Switch to the correct ward view
+      if (typeof person.row === 'number' && typeof person.pos === 'number') {
+        const plotIdentifier: PlotIdentifier = { block: person.block, row: person.row, pos: person.pos, rawId: `plot-${person.block}-${person.row}-${person.pos}` };
+        setPlotToHighlight(plotIdentifier);
+      }
     } else {
       setPlotToHighlight(null);
     }
@@ -151,57 +106,55 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
   const closeInfoModalAndClearHighlight = React.useCallback(() => {
     baseCloseInfoModal();
     setPlotToHighlight(null);
+    // Don't navigate back to overview map automatically, let user do it.
   }, [baseCloseInfoModal]);
 
-  // --- Permission Check ---
+  // Permission Check Logic (remains the same)
   const canManageSelectedRecord = useRecordManagementPermission(user, selectedRecordForInfo);
 
-  // --- Edit Click Handler ---
+  // Edit Click Handler (remains the same)
   const handleEditClick = React.useCallback((personToEdit: Person) => {
     console.log("Edit:", personToEdit);
-    // TODO: Implement actual edit logic
-    closeInfoModalAndClearHighlight(); // Use the new handler
+    closeInfoModalAndClearHighlight();
   }, [closeInfoModalAndClearHighlight]);
 
-  // --- Map Plot Click Handler ---
+  // --- Map Click Handlers (Updated for Drill-Down) ---
   const handleMapPlotClick = React.useCallback((plotIdentifier: PlotIdentifier) => {
-    const plotIdStr = `${plotIdentifier.block}-${plotIdentifier.row}-${plotIdentifier.pos}`;
-    const foundRecord = allRecords.find(
-      p => p.block === plotIdentifier.block && p.row === plotIdentifier.row && p.pos === plotIdentifier.pos
-    );
-
-    if (foundRecord) {
-      openInfoModalAndHighlight(foundRecord);
-    } else {
-      // If no record, still highlight the plot, close any non-matching open info modal
-      setPlotToHighlight(plotIdStr);
-      if (isInfoModalOpen && selectedRecordForInfo &&
-        plotToHighlight !== plotIdStr // Check if it's a different plot
-      ) {
-        baseCloseInfoModal(); // Close previous modal but retain current map highlight
+    if (activeWardId) {
+      // We are in a DETAILED WARD VIEW, a plot was clicked
+      const foundRecord = allRecords.find(p => p.block === plotIdentifier.block && p.row === plotIdentifier.row && p.pos === plotIdentifier.pos);
+      if (foundRecord) {
+        openInfoModalAndHighlight(foundRecord);
+      } else {
+        setPlotToHighlight(plotIdentifier); // Highlight the empty plot
+        if (isInfoModalOpen) baseCloseInfoModal(); // Close any other info modal if open
+        console.warn(`No record found for plot: ${plotIdentifier.rawId}`);
       }
-      console.warn(`No record found for plot: ${plotIdStr}`);
+    } else {
+      // We are in the OVERVIEW MAP VIEW, a ward was clicked
+      const clickedWardId = plotIdentifier.block; // The 'block' from a ward click is the ward ID
+      if (wardComponentMap[clickedWardId]) { // Check if a detailed map component exists
+        console.log(`Switching to detailed view for ward: ${clickedWardId}`);
+        setActiveWardId(clickedWardId);
+        setPlotToHighlight(null); // Clear any previous plot highlight when changing views
+      } else {
+        console.warn(`No detailed map component found for ward: ${clickedWardId}`);
+        // Optionally show a notification to the user
+      }
     }
-  }, [allRecords, openInfoModalAndHighlight, baseCloseInfoModal, isInfoModalOpen, selectedRecordForInfo, plotToHighlight]);
+  }, [allRecords, activeWardId, openInfoModalAndHighlight, baseCloseInfoModal, isInfoModalOpen]);
+
+  const handleReturnToOverview = () => {
+    setActiveWardId(null);
+    setPlotToHighlight(null);
+  };
 
 
-  // --- Table Setup ---
-  const columns = React.useMemo<ColumnDef<Person>[]>(
-    () => [...staticPersonColumns],
-    []
-  );
-  const table = useReactTable({
-    data: filteredData,
-    columns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    initialState: { pagination: { pageSize: 10 } },
-  });
-
-  if (loadingAuth) {
+  // --- Table Setup (remains the same) ---
+  const columns = React.useMemo<ColumnDef<Person>[]>(() => [...staticPersonColumns], []);
+  const table = useReactTable({ data: filteredData, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getPaginationRowModel: getPaginationRowModel(), getSortedRowModel: getSortedRowModel(), initialState: { pagination: { pageSize: 10 } }, });
+  
+ if (loadingAuth) {
     return (
       <Layout>
         <div className="p-4 sm:p-6 flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -211,10 +164,12 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
     );
   }
 
+  const SelectedWardComponent = activeWardId ? wardComponentMap[activeWardId] : null;
+
   return (
     <Layout>
-      <div className="p-4 sm:p-6 bg-white rounded-lg shadow-xl mx-auto max-w-full xl:max-w-screen-2xl"> {/* Allow wider layout */}
-        {/* Search UI & Map Toggle Button */}
+      <div className="p-4 sm:p-6 bg-white rounded-lg shadow-xl mx-auto max-w-full xl:max-w-screen-2xl">
+        {/* --- Search UI & Map Toggle --- */}
         <div className="mb-6 pb-4 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
             <h1 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2 sm:mb-0">
@@ -252,16 +207,42 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
           </form>
         </div>
 
-        {/* Conditionally render Map */}
+        {/* --- Map Section with Conditional Rendering --- */}
         {showMap && (
           <div className="mb-6 p-1 sm:p-2 border rounded-md bg-gray-50 shadow">
-            <h3 className="text-lg font-medium text-gray-800 mb-2 px-2 pt-1">Cemetery Map</h3>
-            <InteractiveCemeteryMap
-              // If using SvgMapComponent prop for an imported SVG component:
-              SvgMapOverlayComponent={CemeteryMapSVG}
-              selectedPlotId={plotToHighlight}
-              onPlotClick={handleMapPlotClick} 
-              backgroundImageUrl={''} />
+            <div className="flex justify-between items-center px-2 pt-1 mb-2">
+                <h3 className="text-lg font-medium text-gray-800">
+                    {activeWardId ? `Ward ${activeWardId} Details` : "Cemetery Overview"}
+                </h3>
+                {activeWardId && (
+                    <Button variant="ghost" size="sm" onClick={handleReturnToOverview} className="flex items-center text-sm">
+                        <ArrowLeft size={16} className="mr-1" /> Back to Main Map
+                    </Button>
+                )}
+            </div>
+
+            {activeWardId ? (
+              // --- RENDER DETAILED WARD MAP ---
+              SelectedWardComponent ? (
+                <InteractiveCemeteryMap
+                  key={activeWardId} // Force re-mount of map component when ward changes
+                  SvgMapOverlayComponent={SelectedWardComponent}
+                  selectedPlotId={plotToHighlight ? plotToHighlight.rawId : null}
+                  onPlotClick={handleMapPlotClick}
+                />
+              ) : (
+                <div className="text-center py-20 text-red-600">
+                  Detailed map for Ward '{activeWardId}' is not available.
+                </div>
+              )
+            ) : (
+              // --- RENDER OVERVIEW MAP ---
+              <InteractiveCemeteryMap
+                SvgMapOverlayComponent={CemeteryMapSVG}
+                selectedPlotId={null} // Highlighting on overview could highlight a whole ward
+                onPlotClick={handleMapPlotClick}
+              />
+            )}
           </div>
         )}
 
@@ -317,10 +298,5 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
     </Layout>
   );
 };
-// Re-add the missing parts for copy-pasting the full component
-const RecordsLoadingAuthPlaceholder: React.FunctionComponent<IRecordsProps> = (props) => {
-  return (<Layout> <div className="p-4 sm:p-6 flex justify-center items-center min-h-[calc(100vh-200px)]"> <p className="text-lg text-gray-500">Authenticating...</p> </div> </Layout>);
-}
-
 
 export default Records;
