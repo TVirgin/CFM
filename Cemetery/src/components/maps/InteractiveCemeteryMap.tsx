@@ -41,9 +41,7 @@ export const parsePlotDomId = (domId: string): PlotIdentifier | null => {
 
 interface InteractiveCemeteryMapProps {
   // SvgMapOverlayComponent is your CemeteryMapSVG component
-  SvgMapOverlayComponent: React.ForwardRefExoticComponent<
-    React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }
-  >;
+  SvgMapOverlayComponent: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>;
   selectedPlotId?: string | null; // e.g., "wardA", "ward1" matching an ID in your SVG
   onPlotClick: (plotIdentifier: PlotIdentifier) => void;
   highlightClass?: string;

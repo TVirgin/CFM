@@ -12,11 +12,14 @@ interface CemeteryMapSVGProps extends React.SVGProps<SVGSVGElement> {}
 export const CemeteryMapSVG = React.forwardRef<SVGSVGElement, CemeteryMapSVGProps>(
   (props, ref) => {
     // Spread any props passed from the parent onto the root <svg> element.
-    const { ...restOfProps } = props;
+    const { className, style, onClick } = props;
 
     return (
       <svg
-        ref={ref}
+        ref={ref}           // The ref is passed as a separate argument from forwardRef
+        onClick={onClick}   // Apply the onClick handler from props
+        style={style}       // Apply the style object from props
+        className={className}
         width="577.8584mm"
         height="697.46033mm"
         viewBox="0 0 577.85841 697.46032"
@@ -25,7 +28,7 @@ export const CemeteryMapSVG = React.forwardRef<SVGSVGElement, CemeteryMapSVGProp
         xmlSpace="preserve"
         xmlns="http://www.w3.org/2000/svg"
         xmlnsXlink="http://www.w3.org/1999/xlink"
-        {...restOfProps} // This applies onClick, className, style, etc. from the parent
+        //{...restOfProps} // This applies onClick, className, style, etc. from the parent
       >
         <defs id="defs1">
           {/* This CSS will style the interactive plot elements */}

@@ -226,7 +226,7 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
               SelectedWardComponent ? (
                 <InteractiveCemeteryMap
                   key={activeWardId} // Force re-mount of map component when ward changes
-                  SvgMapOverlayComponent={SelectedWardComponent}
+                  SvgMapOverlayComponent={SelectedWardComponent as React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>}
                   selectedPlotId={plotToHighlight ? plotToHighlight.rawId : null}
                   onPlotClick={handleMapPlotClick}
                 />
@@ -238,7 +238,9 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
             ) : (
               // --- RENDER OVERVIEW MAP ---
               <InteractiveCemeteryMap
-                SvgMapOverlayComponent={CemeteryMapSVG}
+                SvgMapOverlayComponent={
+                  CemeteryMapSVG as React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>
+                }                
                 selectedPlotId={null} // Highlighting on overview could highlight a whole ward
                 onPlotClick={handleMapPlotClick}
               />
