@@ -1,11 +1,11 @@
-// src/components/maps/wards/Ward1ESVG.tsx
+// src/components/maps/wards/Block1ESVG.tsx
 import * as React from 'react';
 
 // This component can accept all standard SVG props (className, style, onClick, etc.)
 interface WardSVGProps extends React.SVGProps<SVGSVGElement> {}
 
 // Use React.forwardRef to allow the parent to get a ref to the <svg> element
-export const Ward1ESVG = React.forwardRef<SVGSVGElement, WardSVGProps>(
+export const Block1ESVG = React.forwardRef<SVGSVGElement, WardSVGProps>(
   (props, ref) => {
     // Spread all props from the parent onto the root <svg> element
     const { className, style, onClick } = props;
@@ -13,12 +13,12 @@ export const Ward1ESVG = React.forwardRef<SVGSVGElement, WardSVGProps>(
     return (
       <svg
         ref={ref}
-        onClick={onClick}   // Apply the onClick handler from props
-        style={style}       // Apply the style object from props
+        onClick={onClick}   
+        style={style}      
         className={className}
         width="377.8584mm"
         height="397.46033mm"
-        viewBox="0 0 577.85841 697.46032"
+        viewBox="-100 -70 277.85841 397.46032"
         version="1.1"
         id="svg1"
         xmlSpace="preserve"
@@ -35,7 +35,7 @@ export const Ward1ESVG = React.forwardRef<SVGSVGElement, WardSVGProps>(
               transition: fill 0.2s ease;
             }
             .plot-interaction-layer:hover {
-              fill: rgba(74, 144, 226, 0.4);
+              fill: rgb(74, 145, 226);
             }
             .plot-highlighted {
               fill: rgba(255, 165, 0, 0.7) !important; /* Orange highlight */
@@ -74,6 +74,6 @@ export const Ward1ESVG = React.forwardRef<SVGSVGElement, WardSVGProps>(
   }
 );
 
-Ward1ESVG.displayName = "Ward1ESVG";
+Block1ESVG.displayName = "Block1ESVG";
 
-export default Ward1ESVG;
+export default Block1ESVG;

@@ -34,14 +34,14 @@ import { InteractiveCemeteryMap, PlotIdentifier } from '../../components/maps/In
 import { CemeteryMapSVG } from '../../components/maps/CemeteryMapSVG'; // Your main overview map component
 
 // --- DETAILED WARD SVG COMPONENTS (Examples - you must create these) ---
-import { Ward1ESVG } from '../../components/maps/wards/Ward1ESVG'; // Example
+import { Block1ESVG } from '../../components/maps/wards/Block1ESVG'; // Example
 import { WardASVG } from '../../components/maps/wards/WardASVG';   // Example
 // ... import all other ward SVG components ...
 
 
 // A helper map to dynamically select the correct ward SVG component
 const wardComponentMap: { [key: string]: React.ElementType } = {
-  '1E': Ward1ESVG,
+  '1E': Block1ESVG,
   'A': WardASVG,
   // Add entries for all your ward IDs: '1', '2', 'B', 'C', etc.
   // '1': Ward1SVG,
@@ -49,7 +49,7 @@ const wardComponentMap: { [key: string]: React.ElementType } = {
 };
 
 
-interface IRecordsProps {}
+interface IRecordsProps { }
 
 const Records: React.FunctionComponent<IRecordsProps> = (props) => {
   const { user, loadingAuth } = useUserAuth();
@@ -153,8 +153,8 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
   // --- Table Setup (remains the same) ---
   const columns = React.useMemo<ColumnDef<Person>[]>(() => [...staticPersonColumns], []);
   const table = useReactTable({ data: filteredData, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getPaginationRowModel: getPaginationRowModel(), getSortedRowModel: getSortedRowModel(), initialState: { pagination: { pageSize: 10 } }, });
-  
- if (loadingAuth) {
+
+  if (loadingAuth) {
     return (
       <Layout>
         <div className="p-4 sm:p-6 flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -207,72 +207,79 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
           </form>
         </div>
 
-        {/* --- Map Section with Conditional Rendering --- */}
-        {showMap && (
-          <div className="mb-6 p-1 sm:p-2 border rounded-md bg-gray-50 shadow">
-            <div className="flex justify-between items-center px-2 pt-1 mb-2">
+        {/* --- Main Content Area: Map and Table Side-by-Side --- */}
+        <div className="flex flex-col lg:flex-row lg:space-x-6">
+
+          {/* --- Column 1: Map (Conditionally Rendered) --- */}
+          {showMap && (
+            <div className="mb-6 p-1 sm:p-2 border rounded-md bg-gray-50 shadow">
+              <div className="flex justify-between items-center px-2 pt-1 mb-2">
                 <h3 className="text-lg font-medium text-gray-800">
-                    {activeWardId ? `Ward ${activeWardId} Details` : "Cemetery Overview"}
+                  {activeWardId ? `Block ${activeWardId} Details` : "Cemetery Overview"}
                 </h3>
                 {activeWardId && (
-                    <Button variant="ghost" size="sm" onClick={handleReturnToOverview} className="flex items-center text-sm">
-                        <ArrowLeft size={16} className="mr-1" /> Back to Main Map
-                    </Button>
+                  <Button variant="ghost" size="sm" onClick={handleReturnToOverview} className="flex items-center text-sm">
+                    <ArrowLeft size={16} className="mr-1" /> Back to Main Map
+                  </Button>
                 )}
-            </div>
+              </div>
 
-            {activeWardId ? (
-              // --- RENDER DETAILED WARD MAP ---
-              SelectedWardComponent ? (
+              {activeWardId ? (
+                // --- RENDER DETAILED WARD MAP ---
+                SelectedWardComponent ? (
+                  <InteractiveCemeteryMap
+                    key={activeWardId} // Force re-mount of map component when ward changes
+                    SvgMapOverlayComponent={SelectedWardComponent as React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>}
+                    selectedPlotId={plotToHighlight ? plotToHighlight.rawId : null}
+                    onPlotClick={handleMapPlotClick}
+                  />
+                ) : (
+                  <div className="text-center py-20 text-red-600">
+                    Detailed map for Ward '{activeWardId}' is not available.
+                  </div>
+                )
+              ) : (
+                // --- RENDER OVERVIEW MAP ---
                 <InteractiveCemeteryMap
-                  key={activeWardId} // Force re-mount of map component when ward changes
-                  SvgMapOverlayComponent={SelectedWardComponent as React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>}
-                  selectedPlotId={plotToHighlight ? plotToHighlight.rawId : null}
+                  SvgMapOverlayComponent={
+                    CemeteryMapSVG as React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>
+                  }
+                  selectedPlotId={null} // Highlighting on overview could highlight a whole ward
                   onPlotClick={handleMapPlotClick}
                 />
-              ) : (
-                <div className="text-center py-20 text-red-600">
-                  Detailed map for Ward '{activeWardId}' is not available.
-                </div>
-              )
-            ) : (
-              // --- RENDER OVERVIEW MAP ---
-              <InteractiveCemeteryMap
-                SvgMapOverlayComponent={
-                  CemeteryMapSVG as React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>
-                }                
-                selectedPlotId={null} // Highlighting on overview could highlight a whole ward
-                onPlotClick={handleMapPlotClick}
-              />
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
 
-        {/* Table Display Section */}
-        {isLoadingRecords ? (
-          <div className="text-center py-10 text-gray-500">Loading records...</div>
-        ) : fetchError ? (
-          <div className="my-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-            <p><strong>Error:</strong> {fetchError}</p>
-          </div>
-        ) : (
-          <>
-            <RecordsTableDisplay
-              table={table}
-              onRowClick={openInfoModalAndHighlight} // Use new handler for row clicks
-              isLoading={false} // isLoadingRecords already handled above
-              hasError={false}  // fetchError already handled above
-            />
-            {filteredData.length === 0 && (
-              <div className="text-center py-10 text-gray-500">
-                No records found matching your criteria.
+          {/* --- Column 2: Table and Pagination --- */}
+          <div className="flex-1 min-w-0"> {/* flex-1 takes remaining space, min-w-0 prevents table overflow issues */}
+            {isLoadingRecords ? (
+              <div className="text-center py-10 text-gray-500">Loading records...</div>
+            ) : fetchError ? (
+              <div className="my-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                <p><strong>Error:</strong> {fetchError}</p>
               </div>
+            ) : (
+              <>
+                <RecordsTableDisplay
+                  table={table}
+                  onRowClick={openInfoModalAndHighlight} // Use new handler for row clicks
+                  isLoading={false} // isLoadingRecords already handled above
+                  hasError={false}  // fetchError already handled above
+                />
+                {filteredData.length === 0 && (
+                  <div className="text-center py-10 text-gray-500">
+                    No records found matching your criteria.
+                  </div>
+                )}
+                {filteredData.length > 0 && (
+                  <RecordsPagination table={table} />
+                )}
+              </>
             )}
-            {filteredData.length > 0 && (
-              <RecordsPagination table={table} />
-            )}
-          </>
-        )}
+          </div>
+
+        </div> {/* End of side-by-side container */}
       </div>
 
       {/* Render Modals */}
