@@ -40,36 +40,13 @@ export const CemeteryMapSVG = React.forwardRef<SVGSVGElement, CemeteryMapSVGProp
         xmlnsXlink="http://www.w3.org/1999/xlink"
         //{...restOfProps} // This applies onClick, className, style, etc. from the parent
       >
-        <defs id="defs1">
-          {/* This CSS will style the interactive plot elements */}
-          <style>{`
-            .plot-interaction-layer {
-              /* The inline fill/stroke from Inkscape will be used initially.
-                 Adding a cursor to indicate interactivity. */
-              cursor: pointer;
-              transition: fill-opacity 0.2s ease, stroke-opacity 0.2s ease;
-            }
-            .plot-interaction-layer:hover {
-              /* On hover, make the plot slightly more visible */
-              fill-opacity: 0.6 !important;
-              stroke-opacity: 0.9 !important;
-            }
-            .plot-highlighted {
-              /* This class is toggled by JavaScript to show selection */
-              fill: rgba(255, 165, 0, 0.7) !important; /* A bright orange highlight */
-              stroke: rgba(200, 100, 0, 1) !important;
-              stroke-width: 2px !important;
-              stroke-opacity: 1 !important;
-            }
-          `}</style>
-        </defs>
         <g
           id="layer1"
           transform="translate(133.7639,334.11701)"
         >
           {/* Group containing the two background images */}
           <g
-            id="g5" // Renamed from g4 in your new SVG
+            id="g5"
           >
             <image
               width="436.5625"

@@ -2,7 +2,7 @@
 
 import Layout from '@/components/layout';
 import * as React from 'react';
-import './index.css'; // Your existing styles
+import './index.css';
 import {
   ColumnDef,
   getCoreRowModel,
@@ -35,17 +35,15 @@ import { CemeteryMapSVG } from '../../components/maps/CemeteryMapSVG'; // Your m
 
 // --- DETAILED WARD SVG COMPONENTS (Examples - you must create these) ---
 import { Block1ESVG } from '../../components/maps/wards/Block1ESVG'; // Example
-import { WardASVG } from '../../components/maps/wards/WardASVG';   // Example
+import { Block1SVG } from '../../components/maps/wards/Block1SVG';   // Example
 // ... import all other ward SVG components ...
 
 
 // A helper map to dynamically select the correct ward SVG component
 const wardComponentMap: { [key: string]: React.ElementType } = {
   '1E': Block1ESVG,
-  'A': WardASVG,
-  // Add entries for all your ward IDs: '1', '2', 'B', 'C', etc.
-  // '1': Ward1SVG,
-  // '2': Ward2SVG,
+  '1': Block1SVG,
+
 };
 
 
@@ -67,24 +65,26 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
   // --- State for Map Interaction & Drill-Down ---
   const [plotToHighlight, setPlotToHighlight] = React.useState<PlotIdentifier | null>(null);
   const [showMap, setShowMap] = React.useState(true); // Keep map initially visible
-  const [activeWardId, setActiveWardId] = React.useState<string | null>(null); // NEW: Tracks which detailed ward map to show
+  const [activeBlockId, setActiveWardId] = React.useState<string | null>(null); // NEW: Tracks which detailed ward map to show
 
 
-  // Client-Side Filtering Logic (remains the same)
-  React.useEffect(() => { /* ... your existing filtering logic ... */
+
+  React.useEffect(() => {
     let recordsToFilter = [...allRecords];
+    if (activeBlockId) { recordsToFilter = recordsToFilter.filter(person => person.block === activeBlockId); }
     if (activeSearchFilters.firstName) { const searchTerm = activeSearchFilters.firstName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.firstName.toLowerCase().includes(searchTerm)); }
     if (activeSearchFilters.lastName) { const searchTerm = activeSearchFilters.lastName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.lastName.toLowerCase().includes(searchTerm)); }
     if (activeSearchFilters.birthDate) { recordsToFilter = recordsToFilter.filter(p => { if (!p.birth) return false; try { return p.birth.toISOString().split('T')[0] === activeSearchFilters.birthDate; } catch (e) { return false; } }); }
     if (activeSearchFilters.deathDate) { recordsToFilter = recordsToFilter.filter(p => { if (!p.death) return false; try { return p.death.toISOString().split('T')[0] === activeSearchFilters.deathDate; } catch (e) { return false; } }); }
     setFilteredData(recordsToFilter);
-  }, [allRecords, activeSearchFilters]);
+  }, [allRecords, activeSearchFilters, activeBlockId]);
 
-  // Search Handlers (remain the same)
+ 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { /* ... */ };
   const handleSearchSubmit = (e?: React.FormEvent<HTMLFormElement>) => { /* ... */ };
   const handleResetSearch = () => { /* ... */ };
-  // --- Delete Modal Logic (remains the same) ---
+
+  // --- Delete Modal Logic ---
   const { isModalOpen: isDeleteModalOpen, recordToDelete, reauthEmail, setReauthEmail, reauthPassword, setReauthPassword, modalError: deleteModalError, isDeleting, openDeleteModal, closeDeleteModal, confirmDelete, } = useDeleteConfirmation({ onDeleteSuccess: (deletedRecordId) => { refetchAllRecords(); setPlotToHighlight(null); } });
   // --- Info Modal Logic & Map Highlighting ---
   const { isInfoModalOpen, selectedRecordForInfo, openInfoModal: baseOpenInfoModal, closeInfoModal: baseCloseInfoModal, } = useRecordInfoModal();
@@ -120,16 +120,16 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
 
   // --- Map Click Handlers (Updated for Drill-Down) ---
   const handleMapPlotClick = React.useCallback((plotIdentifier: PlotIdentifier) => {
-    if (activeWardId) {
+    if (activeBlockId) {
       // We are in a DETAILED WARD VIEW, a plot was clicked
-      const foundRecord = allRecords.find(p => p.block === plotIdentifier.block && p.row === plotIdentifier.row && p.pos === plotIdentifier.pos);
-      if (foundRecord) {
-        openInfoModalAndHighlight(foundRecord);
-      } else {
-        setPlotToHighlight(plotIdentifier); // Highlight the empty plot
-        if (isInfoModalOpen) baseCloseInfoModal(); // Close any other info modal if open
-        console.warn(`No record found for plot: ${plotIdentifier.rawId}`);
-      }
+      // const foundRecord = allRecords.find(p => p.block === plotIdentifier.block && p.row === plotIdentifier.row && p.pos === plotIdentifier.pos);
+      // if (foundRecord) {
+      //   openInfoModalAndHighlight(foundRecord);
+      // } else {
+      //   setPlotToHighlight(plotIdentifier); // Highlight the empty plot
+      //   if (isInfoModalOpen) baseCloseInfoModal(); // Close any other info modal if open
+      //   console.warn(`No record found for plot: ${plotIdentifier.rawId}`);
+      // }
     } else {
       // We are in the OVERVIEW MAP VIEW, a ward was clicked
       const clickedWardId = plotIdentifier.block; // The 'block' from a ward click is the ward ID
@@ -142,7 +142,7 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
         // Optionally show a notification to the user
       }
     }
-  }, [allRecords, activeWardId, openInfoModalAndHighlight, baseCloseInfoModal, isInfoModalOpen]);
+  }, [allRecords, activeBlockId, openInfoModalAndHighlight, baseCloseInfoModal, isInfoModalOpen]);
 
   const handleReturnToOverview = () => {
     setActiveWardId(null);
@@ -164,7 +164,7 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
     );
   }
 
-  const SelectedWardComponent = activeWardId ? wardComponentMap[activeWardId] : null;
+  const SelectedWardComponent = activeBlockId ? wardComponentMap[activeBlockId] : null;
 
   return (
     <Layout>
@@ -215,27 +215,27 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
             <div className="mb-6 p-1 sm:p-2 border rounded-md bg-gray-50 shadow">
               <div className="flex justify-between items-center px-2 pt-1 mb-2">
                 <h3 className="text-lg font-medium text-gray-800">
-                  {activeWardId ? `Block ${activeWardId} Details` : "Cemetery Overview"}
+                  {activeBlockId ? `Block ${activeBlockId} Details` : "Cemetery Overview"}
                 </h3>
-                {activeWardId && (
+                {activeBlockId && (
                   <Button variant="ghost" size="sm" onClick={handleReturnToOverview} className="flex items-center text-sm">
                     <ArrowLeft size={16} className="mr-1" /> Back to Main Map
                   </Button>
                 )}
               </div>
 
-              {activeWardId ? (
+              {activeBlockId ? (
                 // --- RENDER DETAILED WARD MAP ---
                 SelectedWardComponent ? (
                   <InteractiveCemeteryMap
-                    key={activeWardId} // Force re-mount of map component when ward changes
+                    key={activeBlockId} // Force re-mount of map component when ward changes
                     SvgMapOverlayComponent={SelectedWardComponent as React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>}
                     selectedPlotId={plotToHighlight ? plotToHighlight.rawId : null}
                     onPlotClick={handleMapPlotClick}
                   />
                 ) : (
                   <div className="text-center py-20 text-red-600">
-                    Detailed map for Ward '{activeWardId}' is not available.
+                    Detailed map for Ward '{activeBlockId}' is not available.
                   </div>
                 )
               ) : (
