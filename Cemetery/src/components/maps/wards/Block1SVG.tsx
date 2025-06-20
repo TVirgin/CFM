@@ -76,34 +76,14 @@ export const Block1SVG = React.forwardRef<SVGSVGElement, WardSVGProps>(
         onClick={onClick}
         style={style}
         className={className}
-        width="577.85797mm"
-        height="697.46033mm"
-        viewBox="0 0 577.85798 697.46032"
+        width="500"
+        height="697"
+        viewBox="0 0 500 697"
         version="1.1"
         id="svg1"
         xmlSpace="preserve"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <defs id="defs1">
-          {/* You can reuse the same CSS classes for plots across all your SVG maps for consistency */}
-          <style>{`
-            .plot-interaction-layer {
-              fill: rgba(74, 144, 226, 0.1); /* Light blue overlay */
-              stroke: rgba(44, 82, 130, 0.5);
-              stroke-width: 0.5px;
-              cursor: pointer;
-              transition: fill 0.2s ease;
-            }
-            .plot-interaction-layer:hover {
-              fill: rgb(74, 145, 226);
-            }
-            .plot-highlighted {
-              fill: rgba(255, 165, 0, 0.7) !important; /* Orange highlight */
-              stroke: rgba(200, 100, 0, 1) !important;
-              stroke-width: 1.5px !important;
-            }
-          `}</style>
-        </defs>
         <g
           id="layer1"
           transform="translate(396.41125,498.02961)"
