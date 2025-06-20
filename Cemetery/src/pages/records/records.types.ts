@@ -7,7 +7,7 @@ export type Person = {
     birth: Date | null;
     death: Date | null;
     block: string;
-    row: number;
+    lot: number;
     pos: number;
   };
 

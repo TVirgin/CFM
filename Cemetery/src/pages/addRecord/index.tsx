@@ -31,7 +31,7 @@ type NewPersonFormData = {
   birth: string; // Input as string, convert to number on submit
   death: string; // Input as string, convert to number on submit
   block: string;
-  row: string;   // Input as string, convert to number on submit
+  lot: string;   // Input as string, convert to number on submit
   pos: string;   // Input as string, convert to number on submit
 };
 
@@ -42,7 +42,7 @@ const initialFormState: NewPersonFormData = {
   birth: '',
   death: '',
   block: '',
-  row: '',
+  lot: '',
   pos: '',
 };
 
@@ -94,7 +94,7 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
         birth: formData.birth ? new Date(formData.birth + 'T00:00:00') : null, // Convert "YYYY-MM-DD" string to Date or null
         death: formData.death ? new Date(formData.death + 'T00:00:00') : null, // Add T00:00:00 to help with timezone interpretation
         block: formData.block.trim(),
-        row: Number(formData.row) || 0,     // Convert to number
+        lot: Number(formData.lot) || 0,     // Convert to number
         pos: Number(formData.pos) || 0,     // Convert to number
         // If your Firestore documents or 'addRecord' service needs a userId, add it here:
         // userId: user.uid,
@@ -132,7 +132,7 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
           <CardContent>
             <form onSubmit={handleSubmit}>
               <div className="grid w-full items-start gap-6">
-                {/* Row 1: Names */}
+                {/* lot 1: Names */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="firstName">First Name</Label>
@@ -149,7 +149,7 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
                 </div>
 
 
-                {/* Row 2: Birth & Death (Assuming years or timestamps handled as numbers) */}
+                {/* lot 2: Birth & Death (Assuming years or timestamps handled as numbers) */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="birth">Birth Date</Label>
@@ -161,15 +161,15 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
                   </div>
                 </div>
 
-                {/* Row 3: Plot Location */}
+                {/* lot 3: Plot Location */}
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="block">Block</Label>
                     <Input id="block" placeholder="e.g., A" value={formData.block} onChange={handleChange} disabled={isSubmitting} />
                   </div>
                   <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="row">Row</Label>
-                    <Input id="row" type="number" placeholder="e.g., 12" value={formData.row} onChange={handleChange} disabled={isSubmitting} />
+                    <Label htmlFor="lot">lot</Label>
+                    <Input id="lot" type="number" placeholder="e.g., 12" value={formData.lot} onChange={handleChange} disabled={isSubmitting} />
                   </div>
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="pos">Position</Label>

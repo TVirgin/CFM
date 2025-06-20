@@ -32,6 +32,7 @@ import { Search, RotateCcw, MapPin, ArrowLeft } from "lucide-react"; // Added Ar
 // --- Map Component Imports ---
 import { InteractiveCemeteryMap, PlotIdentifier } from '../../components/maps/InteractiveCemeteryMap'; // Adjust path
 import { CemeteryMapSVG } from '../../components/maps/CemeteryMapSVG'; // Your main overview map component
+import { GridMapDisplay } from '../../components/maps/GridMapDisplay'; // Your new grid-based map
 
 // --- DETAILED WARD SVG COMPONENTS (Examples - you must create these) ---
 import { Block1ESVG } from '../../components/maps/wards/Block1ESVG'; // Example
@@ -69,15 +70,24 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
 
 
 
+// --- Client-Side Filtering Logic (UPDATED) ---
   React.useEffect(() => {
     let recordsToFilter = [...allRecords];
-    if (activeBlockId) { recordsToFilter = recordsToFilter.filter(person => person.block === activeBlockId); }
-    if (activeSearchFilters.firstName) { const searchTerm = activeSearchFilters.firstName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.firstName.toLowerCase().includes(searchTerm)); }
-    if (activeSearchFilters.lastName) { const searchTerm = activeSearchFilters.lastName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.lastName.toLowerCase().includes(searchTerm)); }
-    if (activeSearchFilters.birthDate) { recordsToFilter = recordsToFilter.filter(p => { if (!p.birth) return false; try { return p.birth.toISOString().split('T')[0] === activeSearchFilters.birthDate; } catch (e) { return false; } }); }
-    if (activeSearchFilters.deathDate) { recordsToFilter = recordsToFilter.filter(p => { if (!p.death) return false; try { return p.death.toISOString().split('T')[0] === activeSearchFilters.deathDate; } catch (e) { return false; } }); }
+
+    // First, filter by the selected ward/block if one is active
+    if (activeBlockId) {
+      recordsToFilter = recordsToFilter.filter(person => person.block === activeBlockId);
+    }
+
+    // THEN, apply the text/date search filters
+    if (activeSearchFilters.firstName) { /* ...filter logic... */ }
+    if (activeSearchFilters.lastName) { /* ...filter logic... */ }
+    // ... etc. ...
+
     setFilteredData(recordsToFilter);
-  }, [allRecords, activeSearchFilters, activeBlockId]);
+  }, [allRecords, activeSearchFilters, activeBlockId]); // Added activeBlockId dependency
+
+
 
  
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { /* ... */ };
@@ -94,8 +104,8 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
     // When opening info, set both the active ward and the specific plot to highlight
     if (person.block) {
       setActiveWardId(person.block); // Switch to the correct ward view
-      if (typeof person.row === 'number' && typeof person.pos === 'number') {
-        const plotIdentifier: PlotIdentifier = { block: person.block, row: person.row, pos: person.pos, rawId: `plot-${person.block}-${person.row}-${person.pos}` };
+      if (typeof person.lot === 'number' && typeof person.pos === 'number') {
+        const plotIdentifier: PlotIdentifier = { block: person.block, lot: person.lot, pos: person.pos, rawId: `plot-${person.block}-${person.lot}-${person.pos}` };
         setPlotToHighlight(plotIdentifier);
       }
     } else {
@@ -122,7 +132,7 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
   const handleMapPlotClick = React.useCallback((plotIdentifier: PlotIdentifier) => {
     if (activeBlockId) {
       // We are in a DETAILED WARD VIEW, a plot was clicked
-      // const foundRecord = allRecords.find(p => p.block === plotIdentifier.block && p.row === plotIdentifier.row && p.pos === plotIdentifier.pos);
+      // const foundRecord = allRecords.find(p => p.block === plotIdentifier.block && p.lot === plotIdentifier.lot && p.pos === plotIdentifier.pos);
       // if (foundRecord) {
       //   openInfoModalAndHighlight(foundRecord);
       // } else {
@@ -211,45 +221,39 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
         <div className="flex flex-col lg:flex-row lg:space-x-6">
 
           {/* --- Column 1: Map (Conditionally Rendered) --- */}
-          {showMap && (
-            <div className="mb-6 p-1 sm:p-2 border rounded-md bg-gray-50 shadow">
-              <div className="flex justify-between items-center px-2 pt-1 mb-2">
+          {/* --- Map Section with Conditional Rendering for Drill-Down --- */}
+        {showMap && (
+          <div className="mb-6 p-1 sm:p-2 border rounded-md bg-gray-50 shadow">
+            <div className="flex justify-between items-center px-2 pt-1 mb-2">
                 <h3 className="text-lg font-medium text-gray-800">
-                  {activeBlockId ? `Block ${activeBlockId} Details` : "Cemetery Overview"}
+                    {activeBlockId ? `Ward ${activeBlockId} Details` : "Cemetery Overview"}
                 </h3>
                 {activeBlockId && (
-                  <Button variant="ghost" size="sm" onClick={handleReturnToOverview} className="flex items-center text-sm">
-                    <ArrowLeft size={16} className="mr-1" /> Back to Main Map
-                  </Button>
+                    <Button variant="ghost" size="sm" onClick={handleReturnToOverview} className="flex items-center text-sm">
+                        <ArrowLeft size={16} className="mr-1" /> Back to Main Map
+                    </Button>
                 )}
-              </div>
+            </div>
 
-              {activeBlockId ? (
-                // --- RENDER DETAILED WARD MAP ---
-                SelectedWardComponent ? (
-                  <InteractiveCemeteryMap
-                    key={activeBlockId} // Force re-mount of map component when ward changes
-                    SvgMapOverlayComponent={SelectedWardComponent as React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>}
-                    selectedPlotId={plotToHighlight ? plotToHighlight.rawId : null}
-                    onPlotClick={handleMapPlotClick}
-                  />
-                ) : (
-                  <div className="text-center py-20 text-red-600">
-                    Detailed map for Ward '{activeBlockId}' is not available.
-                  </div>
-                )
-              ) : (
-                // --- RENDER OVERVIEW MAP ---
-                <InteractiveCemeteryMap
-                  SvgMapOverlayComponent={
+            {activeBlockId ? (
+              // --- RENDER DETAILED GRID MAP ---
+              <GridMapDisplay
+                  records={filteredData} // Pass the data already filtered for this ward
+                  selectedPlot={plotToHighlight}
+                  onPlotClick={handleMapPlotClick}
+              />
+            ) : (
+              // --- RENDER OVERVIEW SVG MAP ---
+              <InteractiveCemeteryMap
+                SvgMapOverlayComponent={
                     CemeteryMapSVG as React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>
                   }
-                  selectedPlotId={null} // Highlighting on overview could highlight a whole ward
-                  onPlotClick={handleMapPlotClick}
-                />
-              )}
-            </div>
-          )}
+                selectedPlotId={null} // Highlighting on overview is not for individual plots
+                onPlotClick={handleMapPlotClick} // Clicks will switch to detailed view
+              />
+            )}
+          </div>
+        )}
 
           {/* --- Column 2: Table and Pagination --- */}
           <div className="flex-1 min-w-0"> {/* flex-1 takes remaining space, min-w-0 prevents table overflow issues */}
@@ -263,7 +267,7 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
               <>
                 <RecordsTableDisplay
                   table={table}
-                  onRowClick={openInfoModalAndHighlight} // Use new handler for row clicks
+                  onRowClick={openInfoModalAndHighlight} // Use new handler for lot clicks
                   isLoading={false} // isLoadingRecords already handled above
                   hasError={false}  // fetchError already handled above
                 />

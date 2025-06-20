@@ -56,10 +56,10 @@ export const staticPersonColumns: ColumnDef<Person>[] = [
     cell: info => info.getValue(), // Good for displaying the string directly
     footer: props => props.column.id,
   },
-  // Column for Row
+  // Column for Lot
   {
-    accessorKey: 'row',
-    header: 'Row',
+    accessorKey: 'lot',
+    header: 'Lot',
     cell: info => info.getValue(), // Good for displaying the number directly
     footer: props => props.column.id,
   },

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"; // Assuming you use Shadcn Butt
 // Or define them here if local:
 export interface PlotIdentifier {
   block: string;
-  row?: number;
+  lot?: number;
   pos?: number;
   rawId: string;
 }
@@ -20,10 +20,10 @@ export const parsePlotDomId = (domId: string): PlotIdentifier | null => {
     const parts = domId.substring(5).split('-');
     if (parts.length === 3) {
       const block = parts[0];
-      const row = parseInt(parts[1], 10);
+      const lot = parseInt(parts[1], 10);
       const pos = parseInt(parts[2], 10);
-      if (block && !isNaN(row) && !isNaN(pos)) {
-        return { block, row, pos, rawId: domId };
+      if (block && !isNaN(lot) && !isNaN(pos)) {
+        return { block, lot, pos, rawId: domId };
       }
     }
   }
