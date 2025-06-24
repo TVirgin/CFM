@@ -122,7 +122,6 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
 
   const openInfoModalAndHighlight = React.useCallback((person: Person) => {
     baseOpenInfoModal(person);
-    // When opening info, set both the active ward and the specific plot to highlight
     if (person.block) {
       setActiveBlockId(person.block); // Switch to the correct ward view
       if (typeof person.lot === 'number' && typeof person.pos === 'number') {
@@ -154,10 +153,9 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
   };
 
   const handleLayoutFormSubmit = async (layoutData: { lotCount: number; plotsPerLot: number; }) => {
-    if (!activeBlockId) {
-      alert("Error: No active block selected.");
-      return;
-    }
+    if (!activeBlockId)
+      return alert("Error: No active block selected.");
+
     setIsLayoutSaving(true);
     try {
       await setBlockLayout(activeBlockId, layoutData);
@@ -165,9 +163,9 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
       // Trigger a re-fetch of the layout data
       const newLayout = await getBlockLayout(activeBlockId);
       setActiveBlockLayout(newLayout || 'not-found');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save layout:", error);
-      alert("Error saving layout. Please try again.");
+      alert(`Error saving layout: ${error.message}`);
     } finally {
       setIsLayoutSaving(false);
     }
@@ -183,7 +181,9 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
       } else {
         // A truly empty plot was clicked, just highlight it
         setPlotToHighlight(plotIdentifier);
-        if (isInfoModalOpen) baseCloseInfoModal();
+        if (isInfoModalOpen)
+           baseCloseInfoModal();
+        console.warn(`No record found for plot: ${plotIdentifier.rawId}`);
       }
     } else { // In overview map
       const clickedWardId = plotIdentifier.block;
@@ -292,14 +292,14 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
                       <Button onClick={openLayoutModal} className="mt-4">Create Layout</Button>
                     )}
                   </div>
-                ) : (
+                ) : activeBlockLayout ? (
                   <GridMapDisplay
                     layout={activeBlockLayout}
                     occupiedRecords={filteredData}
                     selectedPlot={plotToHighlight}
                     onPlotClick={handleMapPlotClick}
                   />
-                )
+                ) : null
               ) : (
                 // --- RENDER OVERVIEW SVG MAP ---
                 <InteractiveCemeteryMap
@@ -373,8 +373,8 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
         onClose={() => setIsLayoutModalOpen(false)}
         onSubmit={handleLayoutFormSubmit}
         isSaving={isLayoutSaving}
-        blockId={activeBlockId}
-        initialData={activeBlockLayout !== 'not-found' ? (activeBlockLayout as BlockLayout) : null}
+        blockId={activeBlockId} // blockId is guaranteed to be non-null here
+        initialData={activeBlockLayout !== 'not-found' ? activeBlockLayout : null}
       />
     </Layout>
   );
