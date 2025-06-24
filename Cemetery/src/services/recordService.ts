@@ -13,9 +13,10 @@ import {
   where, // For where clauses
   orderBy, // For ordering
   Timestamp,
-  QueryConstraint  
+  QueryConstraint ,
+  setDoc  
 } from 'firebase/firestore';
-import { Person, RecordSearchFilters } from '../pages/records/records.types.ts'; // Adjust path as needed
+import { Person, RecordSearchFilters, BlockLayout } from '../pages/records/records.types.ts';
 
 const PERSON_COLLECTION = 'personRecords'; // Define your collection name
 
@@ -54,7 +55,7 @@ export const getRecords = async (): Promise<Person[]> => {
         death: data.death instanceof Timestamp ? data.death.toDate() : null,
         // --- End Conversion ---
         block: data.block,
-        row: data.row,
+        lot: data.lot,
         pos: data.pos,
         userId: data.userId, // If you added userId to your Person type
       } as Person; // Cast to Person, ensure all fields align with your Person type

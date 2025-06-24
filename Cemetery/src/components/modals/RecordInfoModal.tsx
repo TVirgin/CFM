@@ -59,8 +59,8 @@ export const RecordInfoModal: React.FC<RecordInfoModalProps> = ({
         onClick={(e) => e.stopPropagation()} // Prevent modal close when clicking inside modal content
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between mb-4 pb-3 border-b flex-shrink-0"> {/* Added flex-shrink-0 */}
-          <div className='flex items-center min-w-0'> {/* Added min-w-0 for long titles */}
+        <div className="flex items-center justify-between mb-4 pb-3 border-b flex-shrink-0">
+          <div className='flex items-center min-w-0'>
             <Info className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3 flex-shrink-0" aria-hidden="true" />
             <h3 className="text-lg sm:text-xl leading-6 font-medium text-gray-900 truncate" id="info-modal-title">
               Record Details
@@ -84,7 +84,7 @@ export const RecordInfoModal: React.FC<RecordInfoModalProps> = ({
             <div><strong>Birth Info:</strong> <span className="text-gray-900">{formatDateDisplay(record.birth)}</span></div>
             <div><strong>Death Info:</strong> <span className="text-gray-900">{formatDateDisplay(record.death)}</span></div>
             <div><strong>Block:</strong> <span className="text-gray-900">{record.block}</span></div>
-            <div><strong>Row:</strong> <span className="text-gray-900">{record.row}</span></div>
+            <div><strong>Row:</strong> <span className="text-gray-900">{record.lot}</span></div>
             <div><strong>Position:</strong> <span className="text-gray-900">{record.pos}</span></div>
           </div>
         </div>

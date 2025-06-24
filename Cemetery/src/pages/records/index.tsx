@@ -11,9 +11,11 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { Person, RecordSearchFilters } from './records.types';
+import { Person, RecordSearchFilters, BlockLayout } from './records.types';
 import { staticPersonColumns } from './recordTable.config';
 import { useUserAuth } from '../../context/userAuthContext';
+import { getBlockLayout, setBlockLayout } from '../../services/blockLayoutService'; // Import the new service function
+import { BlockLayoutFormModal } from '../../components/modals/BlockLayoutFormModal'; // Import new modal
 
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation';
 import { DeleteConfirmationModal } from '../../components/modals/DeleteConfirmationModal';
@@ -27,31 +29,19 @@ import { useRecordManagementPermission } from '../../hooks/useRecordManagementPe
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Search, RotateCcw, MapPin, ArrowLeft } from "lucide-react"; // Added ArrowLeft icon
+import { Search, RotateCcw, MapPin, ArrowLeft, Edit } from "lucide-react"; // Added ArrowLeft icon
 
 // --- Map Component Imports ---
 import { InteractiveCemeteryMap, PlotIdentifier } from '../../components/maps/InteractiveCemeteryMap'; // Adjust path
 import { CemeteryMapSVG } from '../../components/maps/CemeteryMapSVG'; // Your main overview map component
 import { GridMapDisplay } from '../../components/maps/GridMapDisplay'; // Your new grid-based map
 
-// --- DETAILED WARD SVG COMPONENTS (Examples - you must create these) ---
-import { Block1ESVG } from '../../components/maps/wards/Block1ESVG'; // Example
-import { Block1SVG } from '../../components/maps/wards/Block1SVG';   // Example
-// ... import all other ward SVG components ...
-
-
-// A helper map to dynamically select the correct ward SVG component
-const wardComponentMap: { [key: string]: React.ElementType } = {
-  '1E': Block1ESVG,
-  '1': Block1SVG,
-
-};
-
 
 interface IRecordsProps { }
 
 const Records: React.FunctionComponent<IRecordsProps> = (props) => {
   const { user, loadingAuth } = useUserAuth();
+  // const navigate = useNavigate();
 
   // --- State for Search Filters ---
   const initialSearchFilters: RecordSearchFilters = { firstName: '', lastName: '', birthDate: '', deathDate: '' };
@@ -66,11 +56,35 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
   // --- State for Map Interaction & Drill-Down ---
   const [plotToHighlight, setPlotToHighlight] = React.useState<PlotIdentifier | null>(null);
   const [showMap, setShowMap] = React.useState(true); // Keep map initially visible
-  const [activeBlockId, setActiveWardId] = React.useState<string | null>(null); // NEW: Tracks which detailed ward map to show
+  const [activeBlockId, setActiveBlockId] = React.useState<string | null>(null);
 
+  // --- NEW: State for layout fetching and editing ---
+  const [activeBlockLayout, setActiveBlockLayout] = React.useState<BlockLayout | null | 'not-found'>(null);
+  const [isLayoutLoading, setIsLayoutLoading] = React.useState(false);
+  const [isLayoutModalOpen, setIsLayoutModalOpen] = React.useState(false);
+  const [isLayoutSaving, setIsLayoutSaving] = React.useState(false);
 
+  React.useEffect(() => {
+    if (activeBlockId) {
+      setIsLayoutLoading(true);
+      getBlockLayout(activeBlockId)
+        .then(layout => {
+          setActiveBlockLayout(layout || 'not-found'); // Set to 'not-found' if null is returned
+        })
+        .catch(error => {
+          console.error("Failed to load block layout:", error);
+          setActiveBlockLayout('not-found'); // Treat error as not found
+          // Optionally set an error state to show in the UI
+        })
+        .finally(() => {
+          setIsLayoutLoading(false);
+        });
+    } else {
+      setActiveBlockLayout(null); // Clear layout when returning to overview
+    }
+  }, [activeBlockId]);
 
-// --- Client-Side Filtering Logic (UPDATED) ---
+  // --- Client-Side Filtering Logic (UPDATED) ---
   React.useEffect(() => {
     let recordsToFilter = [...allRecords];
 
@@ -79,20 +93,27 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
       recordsToFilter = recordsToFilter.filter(person => person.block === activeBlockId);
     }
 
-    // THEN, apply the text/date search filters
-    if (activeSearchFilters.firstName) { /* ...filter logic... */ }
-    if (activeSearchFilters.lastName) { /* ...filter logic... */ }
-    // ... etc. ...
+    if (activeSearchFilters.firstName) { const searchTerm = activeSearchFilters.firstName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.firstName.toLowerCase().includes(searchTerm)); }
+    if (activeSearchFilters.lastName) { const searchTerm = activeSearchFilters.lastName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.lastName.toLowerCase().includes(searchTerm)); }
+    if (activeSearchFilters.birthDate) { recordsToFilter = recordsToFilter.filter(p => { if (!p.birth) return false; try { return p.birth.toISOString().split('T')[0] === activeSearchFilters.birthDate; } catch (e) { return false; } }); }
+    if (activeSearchFilters.deathDate) { recordsToFilter = recordsToFilter.filter(p => { if (!p.death) return false; try { return p.death.toISOString().split('T')[0] === activeSearchFilters.deathDate; } catch (e) { return false; } }); }
 
     setFilteredData(recordsToFilter);
-  }, [allRecords, activeSearchFilters, activeBlockId]); // Added activeBlockId dependency
+  }, [allRecords, activeSearchFilters, activeBlockId]);
 
-
-
- 
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { /* ... */ };
-  const handleSearchSubmit = (e?: React.FormEvent<HTMLFormElement>) => { /* ... */ };
-  const handleResetSearch = () => { /* ... */ };
+  // --- Search Handlers ---More actions
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setSearchFilters(prev => ({ ...prev, [id]: value }));
+  };
+  const handleSearchSubmit = (e?: React.FormEvent<HTMLFormElement>) => {
+    e?.preventDefault();
+    setActiveSearchFilters(searchFilters);
+  };
+  const handleResetSearch = () => {
+    setSearchFilters(initialSearchFilters);
+    setActiveSearchFilters(initialSearchFilters);
+  };
 
   // --- Delete Modal Logic ---
   const { isModalOpen: isDeleteModalOpen, recordToDelete, reauthEmail, setReauthEmail, reauthPassword, setReauthPassword, modalError: deleteModalError, isDeleting, openDeleteModal, closeDeleteModal, confirmDelete, } = useDeleteConfirmation({ onDeleteSuccess: (deletedRecordId) => { refetchAllRecords(); setPlotToHighlight(null); } });
@@ -103,7 +124,7 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
     baseOpenInfoModal(person);
     // When opening info, set both the active ward and the specific plot to highlight
     if (person.block) {
-      setActiveWardId(person.block); // Switch to the correct ward view
+      setActiveBlockId(person.block); // Switch to the correct ward view
       if (typeof person.lot === 'number' && typeof person.pos === 'number') {
         const plotIdentifier: PlotIdentifier = { block: person.block, lot: person.lot, pos: person.pos, rawId: `plot-${person.block}-${person.lot}-${person.pos}` };
         setPlotToHighlight(plotIdentifier);
@@ -128,41 +149,58 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
     closeInfoModalAndClearHighlight();
   }, [closeInfoModalAndClearHighlight]);
 
+  const openLayoutModal = () => {
+    setIsLayoutModalOpen(true);
+  };
+
+  const handleLayoutFormSubmit = async (layoutData: { lotCount: number; plotsPerLot: number; }) => {
+    if (!activeBlockId) {
+      alert("Error: No active block selected.");
+      return;
+    }
+    setIsLayoutSaving(true);
+    try {
+      await setBlockLayout(activeBlockId, layoutData);
+      setIsLayoutModalOpen(false);
+      // Trigger a re-fetch of the layout data
+      const newLayout = await getBlockLayout(activeBlockId);
+      setActiveBlockLayout(newLayout || 'not-found');
+    } catch (error) {
+      console.error("Failed to save layout:", error);
+      alert("Error saving layout. Please try again.");
+    } finally {
+      setIsLayoutSaving(false);
+    }
+  };
+
   // --- Map Click Handlers (Updated for Drill-Down) ---
   const handleMapPlotClick = React.useCallback((plotIdentifier: PlotIdentifier) => {
     if (activeBlockId) {
-      // We are in a DETAILED WARD VIEW, a plot was clicked
-      // const foundRecord = allRecords.find(p => p.block === plotIdentifier.block && p.lot === plotIdentifier.lot && p.pos === plotIdentifier.pos);
-      // if (foundRecord) {
-      //   openInfoModalAndHighlight(foundRecord);
-      // } else {
-      //   setPlotToHighlight(plotIdentifier); // Highlight the empty plot
-      //   if (isInfoModalOpen) baseCloseInfoModal(); // Close any other info modal if open
-      //   console.warn(`No record found for plot: ${plotIdentifier.rawId}`);
-      // }
-    } else {
-      // We are in the OVERVIEW MAP VIEW, a ward was clicked
-      const clickedWardId = plotIdentifier.block; // The 'block' from a ward click is the ward ID
-      if (wardComponentMap[clickedWardId]) { // Check if a detailed map component exists
-        console.log(`Switching to detailed view for ward: ${clickedWardId}`);
-        setActiveWardId(clickedWardId);
-        setPlotToHighlight(null); // Clear any previous plot highlight when changing views
+      // In a detailed grid view, a plot was clicked
+      const foundRecord = allRecords.find(p => p.block === plotIdentifier.block && p.lot === plotIdentifier.lot && p.pos === plotIdentifier.pos);
+      if (foundRecord) {
+        openInfoModalAndHighlight(foundRecord);
       } else {
-        console.warn(`No detailed map component found for ward: ${clickedWardId}`);
-        // Optionally show a notification to the user
+        // A truly empty plot was clicked, just highlight it
+        setPlotToHighlight(plotIdentifier);
+        if (isInfoModalOpen) baseCloseInfoModal();
       }
+    } else { // In overview map
+      const clickedWardId = plotIdentifier.block;
+      setActiveBlockId(clickedWardId);
+      setPlotToHighlight(null);
     }
   }, [allRecords, activeBlockId, openInfoModalAndHighlight, baseCloseInfoModal, isInfoModalOpen]);
 
   const handleReturnToOverview = () => {
-    setActiveWardId(null);
+    setActiveBlockId(null);
     setPlotToHighlight(null);
   };
-
 
   // --- Table Setup (remains the same) ---
   const columns = React.useMemo<ColumnDef<Person>[]>(() => [...staticPersonColumns], []);
   const table = useReactTable({ data: filteredData, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getPaginationRowModel: getPaginationRowModel(), getSortedRowModel: getSortedRowModel(), initialState: { pagination: { pageSize: 10 } }, });
+  // const SelectedWardComponent = activeBlockId ? wardComponentMap[activeBlockId] : null;
 
   if (loadingAuth) {
     return (
@@ -174,7 +212,7 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
     );
   }
 
-  const SelectedWardComponent = activeBlockId ? wardComponentMap[activeBlockId] : null;
+  // const SelectedWardComponent = activeBlockId ? wardComponentMap[activeBlockId] : null;
 
   return (
     <Layout>
@@ -222,38 +260,58 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
 
           {/* --- Column 1: Map (Conditionally Rendered) --- */}
           {/* --- Map Section with Conditional Rendering for Drill-Down --- */}
-        {showMap && (
-          <div className="mb-6 p-1 sm:p-2 border rounded-md bg-gray-50 shadow">
-            <div className="flex justify-between items-center px-2 pt-1 mb-2">
+          {showMap && (
+            <div className="mb-6 p-1 sm:p-2 border rounded-md bg-gray-50 shadow">
+              <div className="flex justify-between items-center px-2 pt-1 mb-2">
                 <h3 className="text-lg font-medium text-gray-800">
-                    {activeBlockId ? `Ward ${activeBlockId} Details` : "Cemetery Overview"}
+                  {activeBlockId ? `Block ${activeBlockId} Details` : "Cemetery Overview"}
                 </h3>
-                {activeBlockId && (
-                    <Button variant="ghost" size="sm" onClick={handleReturnToOverview} className="flex items-center text-sm">
-                        <ArrowLeft size={16} className="mr-1" /> Back to Main Map
+                <div>
+                  {/* --- Conditionally show Edit Layout button --- */}
+                  {activeBlockId && activeBlockLayout && activeBlockLayout !== 'not-found' && user && ( //&& role === 'admin' && (
+                    <Button variant="outline" size="sm" onClick={openLayoutModal} className="flex items-center text-sm mr-2">
+                      <Edit size={16} className="mr-1" /> Edit Layout
                     </Button>
-                )}
-            </div>
+                  )}
+                  {activeBlockId && (
+                    <Button variant="ghost" size="sm" onClick={handleReturnToOverview} className="flex items-center text-sm">
+                      <ArrowLeft size={16} className="mr-1" /> Back to Main Map
+                    </Button>
+                  )}
+                </div>
+              </div>
 
-            {activeBlockId ? (
-              // --- RENDER DETAILED GRID MAP ---
-              <GridMapDisplay
-                  records={filteredData} // Pass the data already filtered for this ward
-                  selectedPlot={plotToHighlight}
-                  onPlotClick={handleMapPlotClick}
-              />
-            ) : (
-              // --- RENDER OVERVIEW SVG MAP ---
-              <InteractiveCemeteryMap
-                SvgMapOverlayComponent={
+              {activeBlockId ? (
+                // --- Logic for Detailed View ---
+                isLayoutLoading ? (
+                  <div className="text-center py-20">Loading Block Layout...</div>
+                ) : activeBlockLayout === 'not-found' ? (
+                  <div className="text-center py-20 text-gray-600">
+                    <p>Layout for Ward '{activeBlockId}' is not defined.</p>
+                    {user && ( //role === 'admin' && ( // Only admins can create layouts
+                      <Button onClick={openLayoutModal} className="mt-4">Create Layout</Button>
+                    )}
+                  </div>
+                ) : (
+                  <GridMapDisplay
+                    layout={activeBlockLayout}
+                    occupiedRecords={filteredData}
+                    selectedPlot={plotToHighlight}
+                    onPlotClick={handleMapPlotClick}
+                  />
+                )
+              ) : (
+                // --- RENDER OVERVIEW SVG MAP ---
+                <InteractiveCemeteryMap
+                  SvgMapOverlayComponent={
                     CemeteryMapSVG as React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { ref?: React.Ref<SVGSVGElement> }>
                   }
-                selectedPlotId={null} // Highlighting on overview is not for individual plots
-                onPlotClick={handleMapPlotClick} // Clicks will switch to detailed view
-              />
-            )}
-          </div>
-        )}
+                  selectedPlotId={null} // Highlighting on overview is not for individual plots
+                  onPlotClick={handleMapPlotClick} // Clicks will switch to detailed view
+                />
+              )}
+            </div>
+          )}
 
           {/* --- Column 2: Table and Pagination --- */}
           <div className="flex-1 min-w-0"> {/* flex-1 takes remaining space, min-w-0 prevents table overflow issues */}
@@ -307,6 +365,16 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
             }, 50); // Delay to allow info modal to close visually
           }
         }}
+      />
+
+      {/* --- RENDER NEW MODAL --- */}
+      <BlockLayoutFormModal
+        isOpen={isLayoutModalOpen}
+        onClose={() => setIsLayoutModalOpen(false)}
+        onSubmit={handleLayoutFormSubmit}
+        isSaving={isLayoutSaving}
+        blockId={activeBlockId}
+        initialData={activeBlockLayout !== 'not-found' ? (activeBlockLayout as BlockLayout) : null}
       />
     </Layout>
   );

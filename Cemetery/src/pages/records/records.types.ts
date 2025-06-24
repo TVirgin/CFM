@@ -18,3 +18,11 @@ export interface RecordSearchFilters {
   birthDate?: string; // Stored as "YYYY-MM-DD" string from input
   deathDate?: string; // Stored as "YYYY-MM-DD" string from input
 }
+
+// src/pages/records/records.types.ts
+export interface BlockLayout {
+  id: string;
+  blockName: string;
+  lotCount: number;
+  plotsPerLot: number;
+}
