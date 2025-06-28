@@ -1,10 +1,7 @@
 // src/hooks/useRecordsData.ts
 import * as React from 'react';
-import { Person, RecordSearchFilters } from '@/pages/records/records.types'; // Adjust path
-import {
-    getRecordsByUserId,
-    getAllRecords,     
-} from '@/services/recordService'; // Adjust path
+import { Person } from '@/pages/records/records.types';
+import { getAllRecords } from '@/services/recordService';
 import { User } from 'firebase/auth';
 
 interface UseRecordsDataReturn {
@@ -16,9 +13,9 @@ interface UseRecordsDataReturn {
 
 // The hook now accepts activeSearchFilters
 export function useRecordsData(
-    user: User | null,
-    loadingAuth: boolean,
-    // filters: RecordSearchFilters // Active search filters
+  user: User | null,
+  loadingAuth: boolean,
+  // filters: RecordSearchFilters // Active search filters
 ): UseRecordsDataReturn {
   const [data, setData] = React.useState<Person[]>([]);
   const [isLoadingRecords, setIsLoadingRecords] = React.useState(true);
@@ -30,9 +27,11 @@ export function useRecordsData(
     try {
       let fetchedRecords: Person[];
       console.log("Fetching data:");
-      
+
       fetchedRecords = await getAllRecords();
-      
+
+      console.log("fetched records: ");
+      console.log(fetchedRecords);
       setData(fetchedRecords);
     } catch (error: any) {
       console.error("Error fetching records in hook:", error);

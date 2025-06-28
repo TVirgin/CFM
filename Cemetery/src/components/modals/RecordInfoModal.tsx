@@ -25,25 +25,25 @@ export const RecordInfoModal: React.FC<RecordInfoModalProps> = ({
   }
 
   // CORRECTED Helper to format Date objects
-  const formatDateDisplay = (dateValue: Date | null | undefined): string => {
+  const formatDateDisplay = (dateValue: string | null | undefined): string => {
     if (!dateValue) { // Handles null or undefined
       return 'N/A';
+    } else {
+      return dateValue;
     }
-    // Ensure it's a valid Date object
-    if (!(dateValue instanceof Date) || isNaN(dateValue.getTime())) {
-      return 'Invalid Date';
-    }
-    try {
-      // Format the Date object into a readable string
-      return dateValue.toLocaleDateString(undefined, { // Uses browser's locale
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return dateValue.toISOString(); // Fallback
-    }
+    
+   
+    // try {
+    //   // Format the Date object into a readable string
+    //   return dateValue.toLocaleDateString(undefined, { // Uses browser's locale
+    //     year: 'numeric',
+    //     month: 'long',
+    //     day: 'numeric'
+    //   });
+    // } catch (e) {
+    //   console.error("Error formatting date:", e);
+    //   return dateValue.toISOString(); // Fallback
+    // }
   };
 
   return (

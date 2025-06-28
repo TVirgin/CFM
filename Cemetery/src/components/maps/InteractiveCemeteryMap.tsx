@@ -11,6 +11,7 @@ export interface PlotIdentifier {
   block: string;
   lot?: number;
   pos?: number;
+  plot?: number;
   rawId: string;
 }
 

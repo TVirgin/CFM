@@ -28,11 +28,12 @@ type NewPersonFormData = {
   firstName: string;
   middleName: string;
   lastName: string;
-  birth: string; // Input as string, convert to number on submit
-  death: string; // Input as string, convert to number on submit
+  birth: string;
+  death: string;
   block: string;
-  lot: string;   // Input as string, convert to number on submit
-  pos: string;   // Input as string, convert to number on submit
+  lot: string;  
+  pos: string;  
+  plot: string; 
 };
 
 const initialFormState: NewPersonFormData = {
@@ -44,6 +45,7 @@ const initialFormState: NewPersonFormData = {
   block: '',
   lot: '',
   pos: '',
+  plot: '',
 };
 
 const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
@@ -91,15 +93,19 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
         firstName: formData.firstName.trim(),
         middleName: formData.middleName.trim(),
         lastName: formData.lastName.trim(),
-        birth: formData.birth ? new Date(formData.birth + 'T00:00:00') : null, // Convert "YYYY-MM-DD" string to Date or null
-        death: formData.death ? new Date(formData.death + 'T00:00:00') : null, // Add T00:00:00 to help with timezone interpretation
+        birth: formData.birth, //? new Date(formData.birth + 'T00:00:00').toDateString() : "", 
+        death: formData.death, //? new Date(formData.death + 'T00:00:00').toDateString() : "",
         block: formData.block.trim(),
-        lot: Number(formData.lot) || 0,     // Convert to number
-        pos: Number(formData.pos) || 0,     // Convert to number
+        lot: Number(formData.lot) || 0,  
+        pos: Number(formData.pos) || 0,  
+        plot: Number(formData.plot) || 0,
         // If your Firestore documents or 'addRecord' service needs a userId, add it here:
         // userId: user.uid,
         // And ensure 'userId' is part of your 'Person' type in records.types.ts
       };
+
+      console.log("record to add");
+      console.log(formData.death);
 
       const newRecordId = await addRecord(recordDataForService);
       setSuccessMessage(`Record added successfully!`);
@@ -117,8 +123,13 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
     }
   };
 
-  const handleCancel = () => {
-    // clear all fields
+ const handleCancel = () => {
+    // Reset the form to its initial, empty state
+    setFormData(initialFormState);
+    
+    // Clear any feedback messages that might be displayed
+    setError(null);
+    setSuccessMessage(null); 
   };
 
   return (
@@ -149,19 +160,19 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
                 </div>
 
 
-                {/* lot 2: Birth & Death (Assuming years or timestamps handled as numbers) */}
+                {/* Birth & Death (Assuming years or timestamps handled as numbers) */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="birth">Birth Date</Label>
-                    <Input id="birth" type="date" value={formData.birth} onChange={handleChange} disabled={isSubmitting} />
+                    <Input id="birth" type="text" placeholder="e.g., 1990 or 1990-05-14" value={formData.birth} onChange={handleChange} disabled={isSubmitting} />
                   </div>
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="death">Death Date</Label>
-                    <Input id="death" type="date" value={formData.death} onChange={handleChange} disabled={isSubmitting} />
+                    <Input id="death" type="text" placeholder="e.g., 2023 or 2023-10-26" value={formData.death} onChange={handleChange} disabled={isSubmitting} />
                   </div>
                 </div>
 
-                {/* lot 3: Plot Location */}
+                {/* Plot Location */}
                 <div className="grid sm:grid-cols-3 gap-4">
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="block">Block</Label>
@@ -174,6 +185,10 @@ const AddRecord: React.FunctionComponent<IAddRecordProps> = (props) => {
                   <div className="flex flex-col space-y-1.5">
                     <Label htmlFor="pos">Position</Label>
                     <Input id="pos" type="number" placeholder="e.g., 3" value={formData.pos} onChange={handleChange} disabled={isSubmitting} />
+                  </div>
+                  <div className="flex flex-col space-y-1.5">
+                    <Label htmlFor="plot">Plot</Label>
+                    <Input id="plot" type="number" placeholder="e.g., 3" value={formData.plot} onChange={handleChange} disabled={isSubmitting} />
                   </div>
                 </div>
 

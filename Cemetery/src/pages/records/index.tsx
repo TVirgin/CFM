@@ -94,9 +94,9 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
     }
 
     if (activeSearchFilters.firstName) { const searchTerm = activeSearchFilters.firstName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.firstName.toLowerCase().includes(searchTerm)); }
-    if (activeSearchFilters.lastName) { const searchTerm = activeSearchFilters.lastName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.lastName.toLowerCase().includes(searchTerm)); }
-    if (activeSearchFilters.birthDate) { recordsToFilter = recordsToFilter.filter(p => { if (!p.birth) return false; try { return p.birth.toISOString().split('T')[0] === activeSearchFilters.birthDate; } catch (e) { return false; } }); }
-    if (activeSearchFilters.deathDate) { recordsToFilter = recordsToFilter.filter(p => { if (!p.death) return false; try { return p.death.toISOString().split('T')[0] === activeSearchFilters.deathDate; } catch (e) { return false; } }); }
+    if (activeSearchFilters.lastName)  { const searchTerm = activeSearchFilters.lastName.toLowerCase(); recordsToFilter = recordsToFilter.filter(p => p.lastName.toLowerCase().includes(searchTerm)); }
+    if (activeSearchFilters.birthDate) { const searchTerm = activeSearchFilters.birthDate; recordsToFilter = recordsToFilter.filter(p => p.birth && p.birth.includes(searchTerm)); }
+    if (activeSearchFilters.deathDate) { const searchTerm = activeSearchFilters.deathDate; recordsToFilter = recordsToFilter.filter(p => p.death && p.death.includes(searchTerm)); }
 
     setFilteredData(recordsToFilter);
   }, [allRecords, activeSearchFilters, activeBlockId]);
@@ -182,7 +182,7 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
         // A truly empty plot was clicked, just highlight it
         setPlotToHighlight(plotIdentifier);
         if (isInfoModalOpen)
-           baseCloseInfoModal();
+          baseCloseInfoModal();
         console.warn(`No record found for plot: ${plotIdentifier.rawId}`);
       }
     } else { // In overview map
@@ -241,12 +241,12 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
             {/* Birth Date */}
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="birthDate">Birth Date</Label>
-              <Input id="birthDate" type="date" value={searchFilters.birthDate} onChange={handleSearchInputChange} />
+              <Input id="birthDate" value={searchFilters.birthDate} onChange={handleSearchInputChange} />
             </div>
             {/* Death Date */}
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="deathDate">Death Date</Label>
-              <Input id="deathDate" type="date" value={searchFilters.deathDate} onChange={handleSearchInputChange} />
+              <Input id="deathDate" value={searchFilters.deathDate} onChange={handleSearchInputChange} />
             </div>
             <div className="flex space-x-2 sm:col-span-2 md:col-span-2 lg:col-span-4 lg:justify-start mt-4 lg:mt-0">
               <Button type="submit" className="flex items-center"><Search size={18} className="mr-2" /> Search</Button>
@@ -287,7 +287,7 @@ const Records: React.FunctionComponent<IRecordsProps> = (props) => {
                   <div className="text-center py-20">Loading Block Layout...</div>
                 ) : activeBlockLayout === 'not-found' ? (
                   <div className="text-center py-20 text-gray-600">
-                    <p>Layout for Ward '{activeBlockId}' is not defined.</p>
+                    <p>Layout for Block '{activeBlockId}' is not defined.</p>
                     {user && ( //role === 'admin' && ( // Only admins can create layouts
                       <Button onClick={openLayoutModal} className="mt-4">Create Layout</Button>
                     )}

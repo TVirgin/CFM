@@ -23,7 +23,7 @@ export const GridMapDisplay: React.FC<GridMapDisplayProps> = ({
     );
   }, [occupiedRecords]);
   
-  const lots = Array.from({ length: layout.lotCount }, (_, i) => i + 1);
+  const lots = Array.from({ length: layout.lotCount }, (_, i) => i + 1).reverse();
   
    return (
     <div className="space-y-3 p-2">

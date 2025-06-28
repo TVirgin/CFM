@@ -51,12 +51,13 @@ export const getRecords = async (): Promise<Person[]> => {
         middleName: data.middleName,
         lastName: data.lastName,
         // --- Convert Timestamp to Date ---
-        birth: data.birth instanceof Timestamp ? data.birth.toDate() : null,
-        death: data.death instanceof Timestamp ? data.death.toDate() : null,
+        birth: data.birth,
+        death: data.death,
         // --- End Conversion ---
         block: data.block,
         lot: data.lot,
         pos: data.pos,
+        plot: data.plot,
         userId: data.userId, // If you added userId to your Person type
       } as Person; // Cast to Person, ensure all fields align with your Person type
     });
@@ -182,8 +183,8 @@ export const getAllRecords = async (filters?: RecordSearchFilters): Promise<Pers
       return {
         id: docSnap.id,
         ...data,
-        birth: data.birth instanceof Timestamp ? data.birth.toDate() : null,
-        death: data.death instanceof Timestamp ? data.death.toDate() : null,
+        birth: data.birth,
+        death: data.death,
       } as Person;
     });
   } catch (error) {
@@ -234,8 +235,8 @@ export const getRecordsByUserId = async (userId: string, filters?: RecordSearchF
       return {
         id: docSnap.id,
         ...data,
-        birth: data.birth instanceof Timestamp ? data.birth.toDate() : null,
-        death: data.death instanceof Timestamp ? data.death.toDate() : null,
+        birth: data.birth,
+        death: data.death,
       } as Person;
     });
   } catch (error) {
