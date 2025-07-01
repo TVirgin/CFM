@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Person, BlockLayout } from '@/pages/records/records.types'; // Adjust path
-import { PlotIdentifier } from './InteractiveCemeteryMap'; // Re-use this type
+import { PlotIdentifier } from '@/pages/records/records.types';
 import { cn } from '@/lib/utils'; // For conditional class names
 
 interface GridMapDisplayProps {

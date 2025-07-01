@@ -25,3 +25,11 @@ export interface BlockLayout {
   lotCount: number;
   plotsPerLot: number;
 }
+
+export interface PlotIdentifier {
+  block: string;
+  lot?: number;
+  pos?: number;
+  plot?: number;
+  rawId: string;
+}

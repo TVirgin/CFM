@@ -2,18 +2,18 @@
 import * as React from 'react';
 import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { Button } from "@/components/ui/button"; // Assuming you use Shadcn Button
-
+import { PlotIdentifier } from '@/pages/records/records.types';
 // Ensure PlotIdentifier and parsePlotDomId are correctly defined and imported
 // If they are in mapUtils.ts:
 // import { PlotIdentifier, parsePlotDomId } from './mapUtils';
 // Or define them here if local:
-export interface PlotIdentifier {
-  block: string;
-  lot?: number;
-  pos?: number;
-  plot?: number;
-  rawId: string;
-}
+// export interface PlotIdentifier {
+//   block: string;
+//   lot?: number;
+//   pos?: number;
+//   plot?: number;
+//   rawId: string;
+// }
 
 export const parsePlotDomId = (domId: string): PlotIdentifier | null => {
   // First, check for the more granular plot-BLOCK-ROW-POS format if you add it later

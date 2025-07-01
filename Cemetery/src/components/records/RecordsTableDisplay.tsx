@@ -2,17 +2,15 @@
 import * as React from 'react';
 import { Table, flexRender } from '@tanstack/react-table';
 import { Person } from '@/pages/records/records.types'; // Adjust path
-import { ChevronsUpDown, ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react'; // Icons for sorting
-import { cn } from '@/lib/utils'; // If you use cn for class names
+import { ChevronsUpDown, ArrowUpNarrowWide, ArrowDownWideNarrow } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface RecordsTableDisplayProps {
   table: Table<Person>;
   onRowClick: (person: Person) => void;
-  isLoading: boolean;
-  hasError: boolean;
 }
 
-export const RecordsTableDisplay: React.FC<RecordsTableDisplayProps> = ({ table, onRowClick, isLoading, hasError }) => {
+export const RecordsTableDisplay: React.FC<RecordsTableDisplayProps> = ({ table, onRowClick }) => {
   return (
     <div className="overflow-x-auto rounded-md border border-gray-200">
       <table className="min-w-full">
@@ -29,25 +27,25 @@ export const RecordsTableDisplay: React.FC<RecordsTableDisplayProps> = ({ table,
                     "px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider whitespace-nowrap border-b-2 border-gray-200",
                     header.column.getCanSort() ? "cursor-pointer select-none hover:bg-gray-200" : ""
                   )}
-                  onClick={header.column.getToggleSortingHandler()} // Make header clickable for sorting
+                  onClick={header.column.getToggleSortingHandler()}
                 >
-                  <div className="flex items-center space-x-1"> {/* Flex container for header text and sort icon */}
-                    <span> {/* Wrap header text in span if it's simple text */}
-                        {header.isPlaceholder
+                  <div className="flex items-center space-x-1">
+                    <span>
+                      {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
                             header.getContext()
-                            )}
+                          )}
                     </span>
                     {/* Display Sorting Icon */}
                     {header.column.getCanSort() && (
-                        <span>
+                      <span>
                         {{
-                            asc: <ArrowUpNarrowWide size={14} className="text-gray-700" />,
-                            desc: <ArrowDownWideNarrow size={14} className="text-gray-700" />,
+                          asc: <ArrowUpNarrowWide size={14} className="text-gray-700" />,
+                          desc: <ArrowDownWideNarrow size={14} className="text-gray-700" />,
                         }[header.column.getIsSorted() as string] ?? <ChevronsUpDown size={14} className="text-gray-400" />}
-                        </span>
+                      </span>
                     )}
                   </div>
                 </th>
@@ -56,19 +54,7 @@ export const RecordsTableDisplay: React.FC<RecordsTableDisplayProps> = ({ table,
           ))}
         </thead>
         <tbody>
-          {isLoading ? (
-            <tr>
-              <td colSpan={table.getHeaderGroups()[0]?.headers.length || table.getAllColumns().length} className="px-6 py-10 text-center text-sm text-gray-500">
-                Loading records...
-              </td>
-            </tr>
-          ) : hasError ? (
-             <tr>
-              <td colSpan={table.getHeaderGroups()[0]?.headers.length || table.getAllColumns().length} className="px-6 py-10 text-center text-sm text-red-500">
-                Error loading records.
-              </td>
-            </tr>
-          ) : table.getRowModel().rows.length > 0 ? (
+          {table.getRowModel().rows.length > 0 ? (
             table.getRowModel().rows.map(row => (
               <tr
                 key={row.id}
@@ -87,12 +73,15 @@ export const RecordsTableDisplay: React.FC<RecordsTableDisplayProps> = ({ table,
               </tr>
             ))
           ) : (
+            // This part is now handled by the parent component, but it's good practice
+            // to keep a fallback message in case the component is ever used elsewhere.
+            // The parent's "No records found" will display more prominently.
             <tr>
               <td
-                colSpan={table.getHeaderGroups()[0]?.headers.length || table.getAllColumns().length}
+                colSpan={table.getAllColumns().length}
                 className="px-6 py-10 text-center text-sm text-gray-500"
               >
-                No records found.
+                No data to display.
               </td>
             </tr>
           )}
