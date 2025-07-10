@@ -99,7 +99,7 @@ export const getRecordById = async (recordId: string): Promise<Person | null> =>
 };
 
 // UPDATE: Update an existing record
-export const updateRecord = async (recordId: string, updates: Partial<Person>): Promise<void> => {
+export const updateRecordOld = async (recordId: string, updates: Partial<Person>): Promise<void> => {
   try {
     const recordDocRef = doc(db, PERSON_COLLECTION, recordId);
     await updateDoc(recordDocRef, updates);
@@ -107,6 +107,21 @@ export const updateRecord = async (recordId: string, updates: Partial<Person>): 
     console.error("Error updating document: ", error);
     throw error;
   }
+};
+
+export const updateRecord = async (record: Person) => {
+  if (!record.id) {
+    throw new Error("Record must have an ID to be updated.");
+  }
+  // The collection name here is 'persons', update if yours is different
+  const recordRef = doc(db, PERSON_COLLECTION, record.id);
+  
+  // Create a copy to avoid potential issues with state mutation
+  const dataToUpdate = { ...record };
+  // The document ID should not be part of the data being written
+  // delete dataToUpdate.id;
+
+  await updateDoc(recordRef, dataToUpdate);
 };
 
 // DELETE: Delete a record
