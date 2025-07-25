@@ -8,7 +8,7 @@ import { BlockLayout } from '@/pages/records/records.types'; // Adjust path
 interface BlockLayoutFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (layoutData: { lotCount: number; plotsPerLot: number; }) => void;
+  onSubmit: (layoutData: { lotCount: number; positionsPerLot: number; plotsPerPosition: number; lotColumns: number; }) => void;
   isSaving: boolean;
   blockId: string | null; // The ID of the block being edited/created (e.g., "A", "1E")
   initialData?: Omit<BlockLayout, 'id' | 'blockName'> | null; // For pre-filling the form on edit
@@ -23,28 +23,38 @@ export const BlockLayoutFormModal: React.FC<BlockLayoutFormModalProps> = ({
   initialData
 }) => {
   const [lotCount, setLotCount] = React.useState(0);
-  const [plotsPerLot, setPlotsPerLot] = React.useState(0);
+  const [positionsPerLot, setPositionsPerLot] = React.useState(0);
+  const [plotsPerPosition, setPlotsPerPosition] = React.useState(0);
+  const [lotColumns, setLotColumns] = React.useState(0);
 
   React.useEffect(() => {
     // Populate form when initialData is provided (for editing)
     if (initialData) {
       setLotCount(initialData.lotCount || 0);
-      setPlotsPerLot(initialData.plotsPerLot || 0);
+      setPositionsPerLot(initialData.positionsPerLot || 0);
+      setPlotsPerPosition(initialData.plotsPerPosition || 0);
+      setLotColumns(initialData.lotColumns || 0);
+
     } else {
       // Reset for creating a new layout
       setLotCount(0);
-      setPlotsPerLot(0);
+      setPositionsPerLot(0);
+      setPlotsPerPosition(0);
+      setLotColumns(0);
     }
   }, [initialData, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const lots = Number(lotCount);
-    const plots = Number(plotsPerLot);
-    if (lots > 0 && plots > 0) {
-      onSubmit({ lotCount: lots, plotsPerLot: plots });
+    const positions = Number(positionsPerLot);
+    const plots = Number(plotsPerPosition);
+    const lotCol = Number(lotColumns);
+
+    if (lots > 0 && positions > 0 && plots > 0 && lotCol > 0) {
+      onSubmit({ lotCount: lots, positionsPerLot: positions, plotsPerPosition: plots, lotColumns: lotCol });
     } else {
-      alert("Please enter valid numbers greater than zero for lots and plots.");
+      alert("Please enter valid numbers greater than zero for lots and positions.");
     }
   };
 
@@ -73,13 +83,37 @@ export const BlockLayoutFormModal: React.FC<BlockLayoutFormModalProps> = ({
             />
           </div>
           <div>
-            <Label htmlFor="plotsPerLot" className="block text-sm font-medium text-gray-700 mb-1">Plots per Lot</Label>
+            <Label htmlFor="positionsPerLot" className="block text-sm font-medium text-gray-700 mb-1">Posistion per Lot</Label>
             <Input
-              id="plotsPerLot"
+              id="positionsPerLot"
               type="number"
               min="1"
-              value={plotsPerLot}
-              onChange={(e) => setPlotsPerLot(Number(e.target.value))}
+              value={positionsPerLot}
+              onChange={(e) => setPositionsPerLot(Number(e.target.value))}
+              disabled={isSaving}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="positionsPerLot" className="block text-sm font-medium text-gray-700 mb-1">Plots per position</Label>
+            <Input
+              id="plotsPerPosition"
+              type="number"
+              min="1"
+              value={plotsPerPosition}
+              onChange={(e) => setPlotsPerPosition(Number(e.target.value))}
+              disabled={isSaving}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="lotColumns" className="block text-sm font-medium text-gray-700 mb-1">Lot Column Nums</Label>
+            <Input
+              id="lotColumns"
+              type="number"
+              min="1"
+              value={lotColumns}
+              onChange={(e) => setLotColumns(Number(e.target.value))}
               disabled={isSaving}
               required
             />

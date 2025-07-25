@@ -44,6 +44,8 @@ const Records: React.FunctionComponent = () => {
   const [showMap, setShowMap] = React.useState(true);
   const [activeBlockId, setActiveBlockId] = React.useState<string | null>(null);
   const [plotToHighlight, setPlotToHighlight] = React.useState<PlotIdentifier | null>(null);
+  const [activeLotId, setActiveLotId] = React.useState<number | null>(null);
+
 
   // --- Derived State: Filtered Data for Table ---
   const filteredData = React.useMemo(() => {
@@ -51,13 +53,16 @@ const Records: React.FunctionComponent = () => {
     if (activeBlockId) {
       recordsToFilter = recordsToFilter.filter(person => person.block === activeBlockId);
     }
+    if (activeLotId) {
+      recordsToFilter = recordsToFilter.filter(person => person.lot === activeLotId);
+    }
     const { firstName, lastName, birthDate, deathDate } = activeSearchFilters;
     if (firstName) recordsToFilter = recordsToFilter.filter(p => p.firstName.toLowerCase().includes(firstName.toLowerCase()));
     if (lastName)  recordsToFilter = recordsToFilter.filter(p => p.lastName.toLowerCase().includes(lastName.toLowerCase()));
     if (birthDate) recordsToFilter = recordsToFilter.filter(p => p.birth && p.birth.includes(birthDate));
     if (deathDate) recordsToFilter = recordsToFilter.filter(p => p.death && p.death.includes(deathDate));
     return recordsToFilter;
-  }, [allRecords, activeSearchFilters, activeBlockId]);
+  }, [allRecords, activeSearchFilters, activeBlockId, activeLotId]);
 
   // --- Search Handlers ---
   const handleSearch = (filters: RecordSearchFilters) => setActiveSearchFilters(filters);
@@ -74,7 +79,8 @@ const Records: React.FunctionComponent = () => {
     openInfoModal(person);
     if (person.block && typeof person.lot === 'number' && typeof person.pos === 'number') {
       setActiveBlockId(person.block);
-      setPlotToHighlight({ block: person.block, lot: person.lot, pos: person.pos, rawId: `plot-${person.block}-${person.lot}-${person.pos}` });
+      setActiveLotId(person.lot);
+      setPlotToHighlight({ block: person.block, lot: person.lot, pos: person.pos, plot: person.plot, rawId: `plot-${person.block}-${person.lot}-${person.pos}-${person.plot}` });
     }
   }, [openInfoModal]);
 
@@ -142,7 +148,7 @@ const Records: React.FunctionComponent = () => {
         <div className="flex flex-col lg:flex-row lg:space-x-6">
           {showMap && (
             <div className="lg:w-1/2 xl:w-2/5">
-                <CemeteryMapManager user={user} activeBlockId={activeBlockId} plotToHighlight={plotToHighlight} recordsForBlock={filteredData} onBlockChange={setActiveBlockId} onPlotClick={handleMapPlotClick} />
+                <CemeteryMapManager user={user} activeBlockId={activeBlockId} plotToHighlight={plotToHighlight} recordsForBlock={filteredData} activeLotId={activeLotId} onBlockChange={setActiveBlockId} onPlotClick={handleMapPlotClick} onLotChange={setActiveLotId}/>
             </div>
           )}
           <div className="flex-1 min-w-0">

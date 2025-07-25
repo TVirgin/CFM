@@ -21,15 +21,16 @@ export interface RecordSearchFilters {
 
 export interface BlockLayout {
   id: string;
-  blockName: string;
   lotCount: number;
-  plotsPerLot: number;
+  positionsPerLot: number;
+  plotsPerPosition: number; 
+  lotColumns?: number; // NEW: Number of columns for lots (e.g., 1 or 2)
 }
 
 export interface PlotIdentifier {
-  block: string;
-  lot?: number;
-  pos?: number;
-  plot?: number;
-  rawId: string;
+  block: string;    
+  lot: number;      
+  pos: number;      
+  plot: number;    
+  rawId: string; 
 }
