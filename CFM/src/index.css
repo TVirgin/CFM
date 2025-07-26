@@ -1,6 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.scroll-container {
+  /* Creates a scroll container that fills the viewport height */
+  overflow-y: scroll;
+  height: 100vh;
+  /* This is the magic! It tells the container to snap on the Y-axis */
+  scroll-snap-type: y mandatory;
+}
+
+.scroll-section {
+  /* This tells each child section where to snap */
+  scroll-snap-align: start;
+  /* Each section should be full-height */
+  height: 100vh;
+  /* Use flex to easily center content within a section */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;

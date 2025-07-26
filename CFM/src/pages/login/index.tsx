@@ -11,16 +11,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { useUserAuth } from "@/context/userAuthContext";
 import { UserLogIn } from "@/types";
-// Image imports seem unused in this component, consider removing if not needed for this specific view
-// import image1 from "@/assets/images/image1.jpg";
-// import image2 from "@/assets/images/image2.jpg";
-// import image3 from "@/assets/images/image3.jpg";
-// import image4 from "@/assets/images/image4.jpg";
-import { Label } from "@/components/ui/label"; // Assuming you use Shadcn's Label, otherwise @radix-ui/react-label
+import { Label } from "@/components/ui/label";
 import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Layout from "@/components/layout";
+import logoImage from '@/assets/images/logo.webp';
 
-interface ILoginProps {}
+
+interface ILoginProps { }
 const initialValue: UserLogIn = {
   email: "",
   password: "",
@@ -122,74 +120,86 @@ const Login: React.FunctionComponent<ILoginProps> = (props) => {
   };
 
   return (
-    <div className="bg-slate-800 w-screen h-screen flex justify-center items-center p-4"> {/* Added p-4 for small screens */}
-      {/* Removed one layer of flex container for simplicity, outer div handles centering */}
-      <div className="w-full max-w-sm"> {/* Ensured max-width for the card */}
-        <Card className="rounded-xl shadow-lg"> {/* Added shadow-lg for better depth if desired */}
-          <form onSubmit={handleSubmit}>
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center mb-2"> {/* Adjusted margin */}
-                Cemetery Admin
-              </CardTitle>
-              {/* Optional CardDescription if you want to add it back
-              <CardDescription className="text-center">
-                Sign in to manage your account
-              </CardDescription>
-              */}
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              {/* Error Notification Area */}
-              {error && (
-                <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm" role="alert">
-                  <p>{error}</p>
-                </div>
-              )}
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email address</Label>
-                <Input
-                  id="email" // id is important for the generic handler
-                  type="email"
-                  placeholder="name@example.com" // Standard placeholder
-                  value={userLogInInfo.email}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                  required // Added basic HTML5 validation
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password" // id is important for the generic handler
-                  type="password"
-                  placeholder="Password"
-                  value={userLogInInfo.password}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                  required // Added basic HTML5 validation
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-4"> {/* Added gap for spacing */}
-              <Button className="w-full" type="submit" disabled={isLoading}>
-                {isLoading ? "Logging In..." : "Login"}
-              </Button>
+    <Layout>
+      <div className="bg-slate-800 w-screen h-screen flex justify-center items-center p-4">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute top-0 left-0 w-full h-full object-cover z-0"
+        >
+          <source
+            src="https://www.comefollowmefhe.com/wp-content/uploads/2024/02/Come-Follow-Me-FHE-Intro-Film-2022-1.mp4#t=0,30"
+            type="video/mp4"
+          />
+          Your browser does not support the video tag.
+        </video>
+        <div className="absolute top-0 left-0 w-full h-full bg-black opacity-50 z-10"></div>
 
-              {/* "Or continue with" divider */}
-              <div className="relative my-1"> {/* Adjusted margin */}
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
+        <div className="w-full max-w-sm z-20">
+          <Card className="rounded-xl shadow-lg">
+            <form onSubmit={handleSubmit}>
+              <CardHeader className="space-y-1">
+                <div>
+                  <img className="h-full w-full" src={logoImage} alt="Cemetery Admin" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
-                    Or contact anthony.virgin@gmail.com
-                  </span>
+              </CardHeader>
+              <CardContent className="grid gap-4">
+                {/* Error Notification Area */}
+                {error && (
+                  <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm" role="alert">
+                    <p>{error}</p>
+                  </div>
+                )}
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email address</Label>
+                  <Input
+                    id="email" // id is important for the generic handler
+                    type="email"
+                    placeholder="name@example.com" // Standard placeholder
+                    value={userLogInInfo.email}
+                    onChange={handleInputChange}
+                    disabled={isLoading}
+                    required // Added basic HTML5 validation
+                  />
                 </div>
-              </div>
-            </CardFooter>
-          </form>
-        </Card>
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password" // id is important for the generic handler
+                    type="password"
+                    placeholder="Password"
+                    value={userLogInInfo.password}
+                    onChange={handleInputChange}
+                    disabled={isLoading}
+                    required // Added basic HTML5 validation
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col gap-4">
+                <button
+                  className="transition-colors duration-150px-4 rounded-md text-sm font-medium text-white bg-[#bf857a] hover:bg-opacity-90"
+                  type="submit" disabled={isLoading}>
+                  {isLoading ? "Logging In..." : "Login"}
+                </button>
+
+                <div className="relative my-1">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                      Or contact anthony.virgin@gmail.com
+                    </span>
+                  </div>
+                </div>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

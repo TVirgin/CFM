@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "comefollowmefhe",
     "public": "dist",
     "ignore": [
       "firebase.json",
